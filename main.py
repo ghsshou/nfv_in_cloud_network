@@ -1,6 +1,7 @@
 import service_chain
 import traffic_generator
 import network_info
+import matplotlib.pyplot as pl
 
 if __name__ == "__main__":
     # Initialize the network function information
@@ -23,10 +24,16 @@ if __name__ == "__main__":
     data_center = ["0", "10"]
     network_tp = network_info.NetworkInfo(data_center)
     # Traffic generator initialize
-    tf_generator = traffic_generator.TrafficGenerator(0.01, 0.001, 100, [1, 3, 5, 7])
+    tf_generator = traffic_generator.TrafficGenerator(5, 0.001, 1000, [1, 3, 5, 7])
     tf_generator.generate_traffic(2, network_tp.get_user_nodes(), 'no')
-    # tf_generator.print_all_requests()
-    tf_generator.print_sleep_time()
+    tf_generator.print_all_requests()
+    # l = tf_generator.print_sleep_time()
+    # x = list(range(1000))
+    # pl.hist(l, 10, color='red')
+    # pl.scatter(x, l)
+    # pl.show()
+
+
 
 
 

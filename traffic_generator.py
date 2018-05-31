@@ -1,6 +1,7 @@
 import math
 import random
 import request_type
+import numpy as np
 
 
 class TrafficGenerator(object):
@@ -9,6 +10,7 @@ class TrafficGenerator(object):
         self._mu = input_mu
         self._max_req_num = max_req_num
         self.optional_data_size = optional_data_size
+        self.time_slot_length = 1  # Length of a time slot in ms
         # The deadline for a request is basic_deadline + deadline_length * random()
         self.basic_deadline = 100
         self.deadline_length = 100
@@ -39,9 +41,8 @@ class TrafficGenerator(object):
         return new_request
 
     def generate_traffic(self, sc_size, user_node, data_size_flag="continuous"):
+        self.sleep_time = self.poisson_traffic(self._lambda, self._max_req_num)
         for i in range(self._max_req_num):
-            sleep_time = self.next_time(self._lambda)
-            self.sleep_time.append(int(sleep_time))
             self.req_set.append(self.generate_one_req(sc_size, user_node, data_size_flag))
 
     def print_all_requests(self):
@@ -49,9 +50,13 @@ class TrafficGenerator(object):
             print(req)
 
     def print_sleep_time(self):
+        result = []
         for value in self.sleep_time:
+            result.append(value)
             print(value)
+        return result
 
-    @staticmethod
-    def next_time(value):
-        return - math.log(random.random()) / value
+    def poisson_traffic(self, lam, max_num):
+        traffic = np.random.poisson(lam, max_num)
+        traffic = [x * self.time_slot_length for x in traffic]
+        return traffic
