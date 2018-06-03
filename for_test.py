@@ -1,6 +1,53 @@
-import numpy as np
-import matplotlib.pyplot as plt
+# import numpy as np
+# import matplotlib.pyplot as plt
+#
+# s = np.random.poisson(5, 10000)
+# count, bins, ignored = plt.hist(s, 14, normed=True)
+# plt.show()
 
-s = np.random.poisson(5, 10000)
-count, bins, ignored = plt.hist(s, 14, normed=True)
-plt.show()
+# import threading
+# import random
+# import numpy as np
+#
+#
+# def fun_random_set(list_tt):
+#     index = np.random.randint(len(list_tt))
+#     if list_tt[index] == 1:
+#         list_tt[index] = 0
+#     else:
+#         list_tt[index] = 1
+#     print(list_tt)
+#
+#
+# list_tt = np.random.randint(0, 2, 10).tolist()
+# for i in range(10):
+#     timer = threading.Timer(5.0, fun_random_set, args=(list_tt,))
+#     timer.start()
+import numpy as np
+import threading, time
+
+
+list_t = np.random.randint(1, 2, 10).tolist()
+print(list_t)
+counter = 0
+
+
+def every_change(list_t, counter):
+    print("Thread name:", threading.current_thread().name)
+    list_t[counter] = 0
+    print("Have changed to:", list_t)
+    time.sleep(2)
+    list_t[counter] = 1
+    print("Changed back to", list_t)
+
+i = 0
+while(i < len(list_t)):
+    t = threading.Thread(target=every_change, args=(list_t, counter))
+    t.start()
+    t.join()
+    i += 1
+    counter += 1
+
+
+
+
