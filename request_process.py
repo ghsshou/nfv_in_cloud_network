@@ -1,3 +1,6 @@
+import threading
+import network_info as ni
+
 
 def process_one_req(data_base, req):
     req_vnfs = list(data_base.scs.get_sc(req.sc))  # Get the name of vnfs
@@ -16,6 +19,26 @@ def process_one_req(data_base, req):
             new_vm = data_base.start_new_vm(est_time[vnf_type], 1, '0')
             data_base.install_vnf_to_vm(vnf_type, new_vm, req.data_size)
             print(new_vm)
+            shut_down_vm_after(data_base, new_vm, 20)
+
+
+# End a VM after a period, t is Time Slot
+def shut_down_vm_after(data_base, vm, t):
+    if vm not in data_base.vms:
+        print("Error: no such VM")
+        return None
+    timer = threading.Timer(t * ni.global_TS, _shut_down_vm, args=(data_base, vm))
+    timer.start()
+
+
+# Shutdown a VM
+def _shut_down_vm(data_base, vm):
+    print("Now close VM:" + str(vm.index) + ",Start at:" + str(vm.start_time))
+    vm.close_vm()
+    data_base.vms.remove(vm)
+
+
+
 
 
 
