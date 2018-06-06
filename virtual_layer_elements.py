@@ -28,7 +28,11 @@ class VirtualMachine(object):
             print("Now appending a VNF to the VM")
             self.vnfs.append(vnf)
             # Next update the end time
-            self.end_time = self.available_time + vnf.install_time + vnf.process_time + vnf.idle_length
+            if self.vnfs[0].name != vnf.name:
+                self.end_time = self.available_time + vnf.install_time + vnf.process_time + vnf.idle_length
+            # if two vnfs are the same type, there is no need to install again
+            else:
+                self.end_time = self.available_time + vnf.process_time + vnf.idle_length
             self.available_time = self.end_time - self.vnfs[1].idle_length
             return 1
         if not self.vnfs:

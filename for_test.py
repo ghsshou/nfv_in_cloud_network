@@ -47,23 +47,32 @@ import threading, time
 #     t.join()
 #     i += 1
 #     counter += 1
-import threading, time
-def print_a_word(i):
-    print("Hello:", str(i))
-    time.sleep(3)
-    print(threading.current_thread().name + "Finish")
+# import threading, time
+# def print_a_word(i):
+#     print("Hello:", str(i))
+#     time.sleep(3)
+#     print(threading.current_thread().name + "Finish")
+#
+# i = 0
+# thread_list = []
+# while i < 10:
+#     print("Now process:" + str(i))
+#     t = threading.Thread(target=print_a_word, args=(i,))
+#     thread_list.append(t)
+#     i += 1
+# for t in thread_list:
+#     t.start()
+# for t in thread_list:
+#     t.join()
 
-i = 0
-thread_list = []
-while i < 10:
-    print("Now process:" + str(i))
-    t = threading.Thread(target=print_a_word, args=(i,))
-    thread_list.append(t)
-    i += 1
-for t in thread_list:
-    t.start()
-for t in thread_list:
-    t.join()
+from enum import Enum, unique
+class CPUPrice(Enum):
+    z1 = ['0', 0.00698]  # name, price (per CPU per hour)
+    z2 = ['1', 0.00798]
+    z3 = ['2', 0.00598]
+
+for xx in CPUPrice:
+    print(xx.value[0])
 
 
 

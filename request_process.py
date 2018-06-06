@@ -1,6 +1,8 @@
 import threading
 import network_info as ni
 import math
+import virtual_layer_elements as vle
+import service_chain
 
 def process_one_req(data_base, req):
     print("***************************")
@@ -18,14 +20,29 @@ def process_one_req(data_base, req):
         if vms:
             vm_w_vnf[vnf_type] = vms
             print(vms[0])
-            temp = data_base.update_vm_w_vnf(vnf_type, vms[0], req.data_size)
-            other_vnf_pro_times.append(temp)
-
+            (process_t, start_t) = data_base.update_vm_w_vnf(vnf_type, vms[0], req.data_size, est_time[vnf_type])
+            print("pro:", process_t, "start_t:", start_t)
+            index = req_vnfs.index(vnf_type)
+            if index < len(req_vnfs) - 1:
+                next_vnf = req_vnfs[index + 1]
+                est_time[next_vnf] = start_t + process_t
+                other_vnf_pro_times.append(process_t + start_t - est_time[vnf_type])
+            elif index == len(req_vnfs) - 1:
+                latency = start_t + process_t - req.arr_time
+                data_base.store_latency(req, latency)
         else:
             cpu_core = cal_cpu_cores(vnf_type, req.data_size, req.deadline, other_vnf_pro_times)
             print("CPU_required: " + str(cpu_core))
-            temp = data_base.start_new_vm(est_time[vnf_type], cpu_core, '0', vnf_type, req.data_size)
-            other_vnf_pro_times.append(temp)
+            (process_t, start_t) = data_base.start_new_vm(est_time[vnf_type], cpu_core, '0', vnf_type, req.data_size)
+            print("pro:", process_t, "start_t:", start_t)
+            index = req_vnfs.index(vnf_type)
+            if index < len(req_vnfs) - 1:
+                next_vnf = req_vnfs[index + 1]
+                est_time[next_vnf] = start_t + process_t
+                other_vnf_pro_times.append(process_t + start_t - est_time[vnf_type])
+            elif index == len(req_vnfs) - 1:
+                latency = start_t + process_t - req.arr_time
+                data_base.store_latency(req, latency)
             # data_base.install_vnf_to_vm(vnf_type, new_vm, req.data_size)
             # print(new_vm)
             # shut_down_vm_after(data_base, new_vm, 20)
@@ -46,12 +63,17 @@ def process_one_req(data_base, req):
 #     vm.close_vm()
 #     data_base.vms.remove(vm)
 
-# Estimate time using Eqn. 1
+# Estimate time using Eqn. 1, because a new VM will started, the boot time and install time should be considered
 def cal_cpu_cores(vnf_type, data_size, ddl, other_vnf_pro_times):
     if vnf_type.value[1] == 0:
         return 1
     max_time = ddl - sum(other_vnf_pro_times)
-    return math.ceil(data_size / vnf_type.value[2] / (max_time * ni.global_TS) )
+    max_time -= vle.VirtualMachine.boot_time  # Consider the boot time
+    max_time -= service_chain.NetworkFunction(vnf_type).install_time  # consider the install time of a VNF
+    if max_time < 0:
+        print("**cal_cpu_cores: Request will be blocked due to latency requirement")
+        return -1
+    return math.ceil(data_size / vnf_type.value[2] / (max_time * ni.global_TS))
 
 
 

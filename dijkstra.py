@@ -7,6 +7,7 @@ class Graph(object):
         self.nodes = set()
         self.edges = defaultdict(list)
         self.distance = {}
+        self.zones = {}
 
     def add_edge(self, src, dst, dist, direction='bidirectional'):
         self.nodes.add(src)
@@ -26,9 +27,11 @@ class Graph(object):
                     src = content[0]
                     dst = content[1]
                     dist = int(content[2])
+                    if len(content) == 4:
+                        self.zones[src] = content[3]
                     self.add_edge(src, dst, dist)
 
-    def shortest_path(self, src, dst, candidate=None):
+    def shortest_paths(self, src):
         not_visited_nodes = set(self.nodes)
         pre_node = {}
         short_dist = {src: 0}
@@ -68,6 +71,12 @@ class Graph(object):
                 v = pre_node[v]
         return short_path, short_dist
 
+    def shortest_path(self, src, dst):
+        paths = self.shortest_paths(src)
+        path = paths[0][dst]
+        dis = paths[1][dst]
+        return path, dis
+
     def print_topology(self):
         print("Node Number: %d" % len(self.nodes))
         for ((src, dst), dist) in self.distance.items():
@@ -87,8 +96,11 @@ if __name__ == "__main__":
     graph.read_from_file('COST239')
     # graph.print_topology()
     src = "0"
-    paths = graph.shortest_path(src, 11)
-    for path in paths[0].values():
-        graph.print_path(src, path)
-        print("Distance:", paths[1][path[-1]])
+    dst = "11"
+    # paths = graph.shortest_paths(src)
+    # for path in paths[0].values():
+    #     graph.print_path(src, path)
+    #     print("Distance:", paths[1][path[-1]])
+    path = graph.shortest_path(src, dst)
+    graph.print_path(src, path[0])
 
