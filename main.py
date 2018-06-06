@@ -29,7 +29,7 @@ if __name__ == "__main__":
     # Traffic generator initialize
     # Para: lambda, mu, request number, optional data size
     data_base.set_traffic_generator(5, 0.001, 2, [1, 3, 5, 7])
-    data_base.tf_gen.print_all_requests()
+    # data_base.tf_gen.print_all_requests()
     # l = data_base.tf_gen.print_sleep_time()
     # x = list(range(1000))
     # pl.hist(l, 10, color='red')
@@ -38,9 +38,12 @@ if __name__ == "__main__":
     # test add vm and vmf
     # data_base.start_new_vm(1, 1, '0')
     # data_base.install_vnf_to_vm(vnf1, data_base.vms[0])
-
-    request_process.process_one_req(data_base, data_base.tf_gen.req_set[0])
-    request_process.process_one_req(data_base, data_base.tf_gen.req_set[1])
+    req1 = data_base.tf_gen.customize_request("1", "10", 0, 1, 1, 20)
+    req2 = data_base.tf_gen.customize_request("1", "10", 0, 1, 12, 20)
+    # request_process.process_one_req(data_base, data_base.tf_gen.req_set[0])
+    # request_process.process_one_req(data_base, data_base.tf_gen.req_set[1])
+    request_process.process_one_req(data_base, req1)
+    request_process.process_one_req(data_base, req2)
 
 
 
