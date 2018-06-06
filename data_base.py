@@ -3,10 +3,11 @@ import network_info
 import traffic_generator
 import virtual_layer_elements
 import network_info as ni
-import threading
+import threading, time
 
 
 class DataBase(object):
+    rLock = threading.RLock()
 
     def __init__(self):
         self.vms = []  # Store the VM information in the network
@@ -53,48 +54,95 @@ class DataBase(object):
             processtime += int(data_size / vnf_type.value[2] / ni.global_TS)
         return prc_time
 
+    # Start a VM with start time, and finish time, using a thread
+    def start_new_vm(self, start_time, cpu, location, vnf_type, data_size):
+        vnf = service_chain.NetworkFunction(vnf_type)
+        use_time = self.estimate_vm_alive_length(vnf, data_size, cpu)
+        processing_time = use_time - vnf.idle_length - vnf.install_time
+        vm = self._start_new_vm(start_time, use_time, cpu, location)
+        # print("Start a new VM:", vm)
+        self.install_vnf_to_vm(vnf, processing_time, vm)
+        print(vm)
+        print("[VNF: " + str(vnf_type.value[0]) + ", VM: " + str(vm.index) + ", VNF processing time: " +
+              str(processing_time) + ", Actually total use time:" + str(use_time) + "]")
+        timer = threading.Timer((vm.end_time - start_time) * ni.global_TS, self._end_vm, args=(vm,))
+        # timer = threading.Thread(target=self._end_vm, args=(vm,))
+        # time.sleep((end_time - start_time) * ni.global_TS)
+        timer.start()
+        # t.join()
+        # return an actual delay for the vnf
+        return vm.boot_time + vnf.process_time + vnf.install_time
+
+    # Install a VNF to an existed VM
+    def update_vm_w_vnf(self, vnf_type, vm, data_size):
+        vnf = service_chain.NetworkFunction(vnf_type)
+        use_time = self.estimate_vm_alive_length(vnf, data_size, vm.cpu_cores)
+        processing_time = use_time - vnf.idle_length - vnf.install_time
+        self.install_vnf_to_vm(vnf, processing_time, vm)
+        # return the value cost in the VNF, including processing time and install time
+        return processing_time + vnf.install_time
+
+
+    # Estimate the time a VM should keep alive, the result returned includes the processing time of a VNF
+    # and its installation time and idle length, but not includes the boot time of a VM
+    def estimate_vm_alive_length(self, vnf, data_size, cpu_cores):
+        process_time = int(data_size / (vnf.throughput * cpu_cores) / ni.global_TS)  # Get how many TSs
+        use_time = process_time + vnf.install_time + vnf.idle_length
+        return use_time
+
+    # Stop a VM after it finish tasks
+    def _end_vm(self, vm):
+        # self.rLock.acquire()
+        if vm not in self.vms or vm.state == 'Closed':
+            print("Remove Error: No such VM or VM is closed")
+            return -1
+        if len(vm.vnfs) == 1:
+            vm.close_vm()
+            self.vms.remove(vm)
+            return 1
+        next_time = vm.vnfs[1].process_time + vm.vnfs[1].idle_length
+        vm.vnfs.pop(0)
+        print("VM still has task,next end time:", next_time)
+        t = threading.Thread(target=self._end_vm, args=(vm,))
+        time.sleep(next_time * ni.global_TS)
+        t.start()
+        # self.rLock.release()
+        # t.join()
 
     # Start a new VM
-    def start_new_vm(self, start_time, cpu, location):
-        vm = virtual_layer_elements.VirtualMachine(start_time, cpu, location)
+    def _start_new_vm(self, start_time, use_time, cpu, location):
+        vm = virtual_layer_elements.VirtualMachine(start_time, use_time, cpu, location)
         self.vms.append(vm)
         return vm
 
     # Install a VNF to a VM
-    def install_vnf_to_vm(self, vnf_type, vm, data_size):
-        vnf = service_chain.NetworkFunction(vnf_type)
-        process_time = None
+    def install_vnf_to_vm(self, vnf, processing_time, vm):
         if vm not in self.vms:
-            print("Error: VM")
-        if vnf.thread_attr == 1:
-            process_time = int(data_size / (vnf.throughput * vm.cpu_cores) / ni.global_TS)  # Get how many TSs will
-            # consume for the data
-        else:
-            process_time = int(data_size / vnf.throughput / ni.global_TS)
-        vnf.set_finish_time(process_time)  # Update the finish time of the instance
+            print("Install VNF Error: no such VM")
+        vnf.set_processing_time(processing_time)  # Update the processing time of the instance
         if vm in self.vms:
             vm.install_vnf(vnf)
         else:
-            print("This is not such VM")
+            print("There is no such VM")
 
     # Get the set of instances of VNFs in the network
     # The input parameter is the VNF name
-    def get_instances_of_vnf(self, vnf_type):
-        # print("Input:", vnf_type.name)
-        if vnf_type not in service_chain.NetworkFunctionName:
-            print("Error: No such VNF type")
-            return None
-        results = []
-        for vnf in self.vnfs:
-            # print("!!!VNF", vnf)
-            if vnf.name == vnf_type.value[0]:
-                results.append(vnf)
-                # print("Find:", vnf)
-        return results
+    # def get_instances_of_vnf(self, vnf_type):
+    #     # print("Input:", vnf_type.name)
+    #     if vnf_type not in service_chain.NetworkFunctionName:
+    #         print("Error: No such VNF type")
+    #         return None
+    #     results = []
+    #     for vnf in self.vnfs:
+    #         # print("!!!VNF", vnf)
+    #         if vnf.name == vnf_type.value[0]:
+    #             results.append(vnf)
+    #             # print("Find:", vnf)
+    #     return results
 
     # Get the set of VMs hosting the input VNF type
     def get_vms_w_vnf(self, vnf_type):
-        print("To find:", vnf_type.value[0])
+        # print("To find:", vnf_type.value[0])
         qualified_vms = []
         if not self.vms:
             return qualified_vms

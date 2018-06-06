@@ -27,26 +27,45 @@ import numpy as np
 import threading, time
 
 
-list_t = np.random.randint(1, 2, 10).tolist()
-print(list_t)
-counter = 0
-
-
-def every_change(list_t, counter):
-    print("Thread name:", threading.current_thread().name)
-    list_t[counter] = 0
-    print("Have changed to:", list_t)
-    time.sleep(2)
-    list_t[counter] = 1
-    print("Changed back to", list_t)
+# list_t = np.random.randint(1, 2, 10).tolist()
+# print(list_t)
+# counter = 0
+#
+#
+# def every_change(list_t, counter):
+#     print("Thread name:", threading.current_thread().name)
+#     list_t[counter] = 0
+#     print("Have changed to:", list_t)
+#     time.sleep(2)
+#     list_t[counter] = 1
+#     print("Changed back to", list_t)
+#
+# i = 0
+# while(i < len(list_t)):
+#     t = threading.Thread(target=every_change, args=(list_t, counter))
+#     t.start()
+#     t.join()
+#     i += 1
+#     counter += 1
+import threading, time
+def print_a_word(i):
+    print("Hello:", str(i))
+    time.sleep(3)
+    print(threading.current_thread().name + "Finish")
 
 i = 0
-while(i < len(list_t)):
-    t = threading.Thread(target=every_change, args=(list_t, counter))
-    t.start()
-    t.join()
+thread_list = []
+while i < 10:
+    print("Now process:" + str(i))
+    t = threading.Thread(target=print_a_word, args=(i,))
+    thread_list.append(t)
     i += 1
-    counter += 1
+for t in thread_list:
+    t.start()
+for t in thread_list:
+    t.join()
+
+
 
 
 

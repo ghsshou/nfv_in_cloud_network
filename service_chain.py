@@ -14,24 +14,25 @@ class NetworkFunction(object):
     counter = 0
 
     def __init__(self, name):
+        self.install_time = 1 # default installation time of a VNF is one TS
         self.name = name.value[0]
         # 0: single thread, 1: multi-thread
         self.thread_attr = name.value[1]
         self.throughput = name.value[2]
         self.index = NetworkFunction.counter
         NetworkFunction.counter += 1
-        self.finish_time = 0
+        self.process_time = 0  # The time for processing time
         self.idle_length = 0
         self.active_state = True
 
     def new_function(self):
         pass
 
-    def get_available_time(self):
-        return self.finish_time
+    # def get_available_time(self):
+        # return self.finish_time
 
-    def set_finish_time(self, fin_time):
-        self.finish_time = fin_time
+    def set_processing_time(self, processing_time):
+        self.process_time = processing_time
 
     def __str__(self):
         return "VNF " + self.name

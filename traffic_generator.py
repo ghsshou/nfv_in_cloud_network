@@ -49,6 +49,11 @@ class TrafficGenerator(object):
             self.req_set.append(self.generate_one_req(sc_size, user_node, data_size_flag))
             self.req_set[i].arr_time = self.sleep_time[i]
 
+    def customize_request(self,src_node, dst_node,  sc_req, data_size, arr_time, ddl):
+        new_request = request_type.Request(src_node, dst_node, sc_req, data_size, ddl)
+        new_request.arr_time = arr_time
+        return new_request
+
     def print_all_requests(self):
         for req in self.req_set:
             print(req)
