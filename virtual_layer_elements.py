@@ -21,30 +21,39 @@ class VirtualMachine(object):
 
     def install_vnf(self, vnf):
         # print("enter install vnf function:", len(self.vnfs))
-        if len(self.vnfs) > 1:
-            print("Error: Cannot add the VNF to this VM")
-            return -1
-        if len(self.vnfs) == 1:
+        # if len(self.vnfs) > 1:
+        #     print("Error: Cannot add the VNF to this VM")
+        #     return -1
+        # print("XXXXX", len(self.vnfs))
+        if len(self.vnfs) >= 1:
             print("Now appending a VNF to the VM")
-            self.vnfs.append(vnf)
             # Next update the end time
-            if self.vnfs[0].name != vnf.name:
+            existed_flag = False
+            for val in self.vnfs:
+                # print("XXXX:", val.name, vnf.name)
+                if val.name == vnf.name:
+                    existed_flag = True
+                    break
+            self.vnfs.append(vnf)
+            if not existed_flag:
+                # print("XXXXSSSS")
                 self.end_time = self.available_time + vnf.install_time + vnf.process_time + vnf.idle_length
             # if two vnfs are the same type, there is no need to install again
             else:
                 self.end_time = self.available_time + vnf.process_time + vnf.idle_length
-            self.available_time = self.end_time - self.vnfs[1].idle_length
+            self.available_time = self.end_time - self.vnfs[-1].idle_length
             return 1
         if not self.vnfs:
             # print("Add a VNF")
             self.vnfs.append(vnf)
+            self.available_time = self.end_time - self.vnfs[0].idle_length
             return 1
 
     # Return the next available time of VM
     def get_next_ava_time(self):
         return self.available_time
 
-    # return whether a VNF is working now in a VM
+    # return whether a VNF is in a VM
     def host_vnf(self, vnf_type):
         for vnf in self.vnfs:
             if vnf_type.value[0] == vnf.name:
@@ -61,4 +70,5 @@ class VirtualMachine(object):
 
     def __str__(self):
         return "[VM " + str(self.index) + ", CPU core: " + str(self.cpu_cores) + \
-            ", now running:" + self.vnfs[0].name + ", next available time:" + str(self.available_time) + "]"
+            ", now running:" + self.vnfs[0].name + ", next available time:" + str(self.available_time) + \
+               ", end time:" + str(self.end_time) +"]"

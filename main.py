@@ -11,7 +11,7 @@ if __name__ == "__main__":
     data_base = data_base.DataBase()
     # Initialize the network function information
     function_set = []
-    vnf1 = service_chain.NetworkFunction(service_chain.NetworkFunctionName.fun_1)
+    # vnf1 = service_chain.NetworkFunction(service_chain.NetworkFunctionName.fun_1)
     # data_base.add_vnf(vnf1)
     # vnf2 = service_chain.NetworkFunction(service_chain.NetworkFunctionName.fun_2)
     # function_set.append(vnf2)
@@ -22,6 +22,8 @@ if __name__ == "__main__":
     data_base.scs.add_sc(new_sc)
     new_sc = [service_chain.NetworkFunctionName.fun_1, service_chain.NetworkFunctionName.fun_2,
               service_chain.NetworkFunctionName.fun_3]
+    data_base.scs.add_sc(new_sc)
+    new_sc = (service_chain.NetworkFunctionName.fun_1, service_chain.NetworkFunctionName.fun_3)
     data_base.scs.add_sc(new_sc)
     # data_base.scs.print_all_scs()
     # Network initialize
@@ -39,18 +41,20 @@ if __name__ == "__main__":
     # test add vm and vmf
     # data_base.start_new_vm(1, 1, '0')
     # data_base.install_vnf_to_vm(vnf1, data_base.vms[0])
-    # req1 = data_base.tf_gen.customize_request("1", "10", 0, 1, 1, 20)
-    # req2 = data_base.tf_gen.customize_request("1", "10", 0, 1, 12, 20)
+    req1 = data_base.tf_gen.customize_request("1", "10", 2, 1, 1, 20)
+    req2 = data_base.tf_gen.customize_request("1", "10", 0, 2, 16, 20)
     # request_process.process_one_req(data_base, data_base.tf_gen.req_set[0])
     # request_process.process_one_req(data_base, data_base.tf_gen.req_set[1])
     # request_process.process_one_req(data_base, req1)
     # request_process.process_one_req(data_base, req2)
-    for i in range(1000):
-        request_process.process_one_req(data_base, data_base.tf_gen.req_set[i])
-    time.sleep(30)
-    print("Total cost: " + str(data_base.total_cpu_cost))
-    print("Average Latency: " + str(data_base.average_latency()) + "s")
-    print("BP: " + str(data_base.blocking_probability() * 100) + "%")
+    # for i in range(1000):
+    #     request_process.process_one_req(data_base, data_base.tf_gen.req_set[i])
+    # time.sleep(30)
+    # print("Total cost: " + str(data_base.total_cpu_cost))
+    # print("Average Latency: " + str(data_base.average_latency()) + "s")
+    # print("BP: " + str(data_base.blocking_probability() * 100) + "%")
+    request_process.algorithm_x(data_base, req1)
+    request_process.algorithm_x(data_base, req2)
 
 
 

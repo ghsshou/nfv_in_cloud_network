@@ -62,13 +62,14 @@ class Graph(object):
         # delete the source node
         short_dist.pop(src)
         short_path = defaultdict(list)
-        for node in (self.nodes - set(src)):
-            short_path[node].append(node)
-            v = node
-            # print("now:" + v)
-            while pre_node[v] != src:
-                short_path[node].insert(0, pre_node[v])
-                v = pre_node[v]
+        for node in self.nodes:
+            if node != src:
+                short_path[node].append(node)
+                v = node
+                # print("now:" + v)
+                while pre_node[v] != src and pre_node[v]:
+                    short_path[node].insert(0, pre_node[v])
+                    v = pre_node[v]
         return short_path, short_dist
 
     def shortest_path(self, src, dst):
@@ -95,12 +96,12 @@ if __name__ == "__main__":
     graph = Graph()
     graph.read_from_file('COST239')
     # graph.print_topology()
-    src = "0"
-    dst = "11"
-    # paths = graph.shortest_paths(src)
-    # for path in paths[0].values():
-    #     graph.print_path(src, path)
-    #     print("Distance:", paths[1][path[-1]])
-    path = graph.shortest_path(src, dst)
-    graph.print_path(src, path[0])
+    src = "10"
+    # dst = "11"
+    paths = graph.shortest_paths(src)
+    for path in paths[0].values():
+        graph.print_path(src, path)
+        print("Distance:", paths[1][path[-1]])
+    # path = graph.shortest_path(src, dst)
+    # graph.print_path(src, path[0])
 

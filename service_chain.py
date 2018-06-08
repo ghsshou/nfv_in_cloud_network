@@ -6,7 +6,7 @@ class NetworkFunctionName(Enum):
     fun_1 = ['0', 0, 2]  # name, thread, throughput
     fun_2 = ['1', 1, 1]
     fun_3 = ['2', 0, 3]
-    fun_4 = ['3', 2, 5]
+    fun_4 = ['3', 1, 5]
 
 
 # This is an instance of a VNF

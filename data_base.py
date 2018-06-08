@@ -75,13 +75,13 @@ class DataBase(object):
         timer.start()
         # t.join()
         # return an actual delay for the vnf, and the start process time for vnf
-        return vnf.process_time, vnf.start_time
+        return vnf.process_time, vnf.start_time, vm
 
     # Install a VNF to an existed VM
-    def update_vm_w_vnf(self, vnf_type, vm, data_size, start_time):
+    def update_vm_w_vnf(self, vnf_type, vm, data_size, *start_time):
         vnf = service_chain.NetworkFunction(vnf_type)
         # if vm has already hosted such a VNF:
-        if vm.vnfs[0].name != vnf_type.value[0]:
+        if not vm.host_vnf(vnf_type):
             use_time = self.estimate_vm_alive_length(vnf, data_size, vm.cpu_cores)
             processing_time = use_time - vnf.idle_length - vnf.install_time
             start_process_vnf = vm.available_time

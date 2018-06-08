@@ -36,8 +36,20 @@ class NetworkInfo(object):
         return self._graph.zones[node]
 
     def get_shortest_dis(self, src, dst):
-        self._graph.shortest_path(src, dst)
+        result = self._graph.shortest_path(src, dst)
+        return result[1]
 
+    def find_nearest_zone(self, node):
+        shorest_dis = float('inf')
+        nearest_dc = None
+        for data_center in self._data_centers:
+            if self.get_shortest_dis(node, data_center) < shorest_dis:
+                nearest_dc = data_center
+                shorest_dis = self.get_shortest_dis(node, data_center)
+        zone = None
+        if nearest_dc:
+            zone = self.get_zone(nearest_dc)
+        return zone, nearest_dc
 
 
 @unique
@@ -47,3 +59,7 @@ class CPUPrice(Enum):
     z3 = ['2', 0.023174]
 
 
+if __name__ == "__main__":
+    network = NetworkInfo("0", "10")
+    zone = network.find_nearest_zone("11")
+    print(zone)
