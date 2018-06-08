@@ -144,7 +144,7 @@ def place_unmapped_vnfs(data_base, unmaped_vnf, mapped_vms, req_vnfs, req, est_t
         (best_zone, cand_dc) = data_base.network.find_nearest_zone(req.src)
     for vnf_type in req_vnfs:
         index = req_vnfs.index(vnf_type)
-        print("INDEX:", index, "mapped_vms:", len(placed_vms))
+        # print("INDEX:", index, "placed_vm:", len(placed_vms))
         # if the vnf has a previous vnf in the chain, which should have been placed
         if vnf_type in unmaped_vnf and index > 0:
             # first, check its previous one
