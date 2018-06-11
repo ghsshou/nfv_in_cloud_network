@@ -26,7 +26,7 @@ class VirtualMachine(object):
         #     return -1
         # print("XXXXX", len(self.vnfs))
         if len(self.vnfs) >= 1:
-            print("Now appending a VNF to the VM")
+            # print("Now appending a VNF to the VM")
             # Next update the end time
             existed_flag = False
             for val in self.vnfs:
@@ -65,10 +65,12 @@ class VirtualMachine(object):
     def close_vm(self):
         self.vnfs = []
         self.state = 'Closed'
-        print("[VM " + str(self.index) + " is closing, live time:"
-              + str(self.start_time) + "--" + str(self.end_time) + "]")
+        # print("[VM " + str(self.index) + " is closing, live time:"
+        #       + str(self.start_time) + "--" + str(self.end_time) + "]")
 
     def __str__(self):
+        # return "[VM " + str(self.index) + ", CPU core: " + str(self.cpu_cores) + \
+        #     ", now running:" + self.vnfs[0].name + ", next available time:" + str(self.available_time) + \
+        #        ", end time:" + str(self.end_time) + "]"
         return "[VM " + str(self.index) + ", CPU core: " + str(self.cpu_cores) + \
-            ", now running:" + self.vnfs[0].name + ", next available time:" + str(self.available_time) + \
-               ", end time:" + str(self.end_time) +"]"
+             str(self.end_time) + "]"

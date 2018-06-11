@@ -31,7 +31,8 @@ if __name__ == "__main__":
     data_base.add_datacenter(data_center)
     # Traffic generator initialize
     # Para: lambda, mu, request number, optional data size
-    data_base.set_traffic_generator(5, 0.001, 1000, [1, 3, 5, 7])
+    traffic_num = 200
+    data_base.set_traffic_generator(5, 0.001, traffic_num, [1, 3, 5, 7])
     # data_base.tf_gen.print_all_requests()
     # l = data_base.tf_gen.print_sleep_time()
     # x = list(range(1000))
@@ -41,20 +42,24 @@ if __name__ == "__main__":
     # test add vm and vmf
     # data_base.start_new_vm(1, 1, '0')
     # data_base.install_vnf_to_vm(vnf1, data_base.vms[0])
-    req1 = data_base.tf_gen.customize_request("1", "10", 2, 1, 1, 20)
-    req2 = data_base.tf_gen.customize_request("1", "10", 0, 2, 16, 20)
+    # req1 = data_base.tf_gen.customize_request("1", "10", 2, 1, 1, 20)
+    # req2 = data_base.tf_gen.customize_request("1", "10", 0, 2, 16, 20)
     # request_process.process_one_req(data_base, data_base.tf_gen.req_set[0])
     # request_process.process_one_req(data_base, data_base.tf_gen.req_set[1])
     # request_process.process_one_req(data_base, req1)
     # request_process.process_one_req(data_base, req2)
-    # for i in range(1000):
-    #     request_process.process_one_req(data_base, data_base.tf_gen.req_set[i])
+    for i in range(traffic_num):
+        # request_process.process_one_req(data_base, data_base.tf_gen.req_set[i])
+        request_process.algorithm_x(data_base, data_base.tf_gen.req_set[i])
+        time.sleep(data_base.tf_gen.sleep_time[i])
     # time.sleep(30)
     # print("Total cost: " + str(data_base.total_cpu_cost))
-    # print("Average Latency: " + str(data_base.average_latency()) + "s")
-    # print("BP: " + str(data_base.blocking_probability() * 100) + "%")
-    request_process.algorithm_x(data_base, req1)
-    request_process.algorithm_x(data_base, req2)
+    data_base.get_cost()
+    data_base.get_used_vm_no()
+    print("Average Latency: " + str(data_base.average_latency()) + "s")
+    print("BP: " + str(data_base.blocking_probability() * 100) + "%")
+    # request_process.algorithm_x(data_base, req1)
+    # request_process.algorithm_x(data_base, req2)
 
 
 

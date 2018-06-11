@@ -67,9 +67,9 @@ import threading, time
 
 from enum import Enum, unique
 class CPUPrice(Enum):
-    z1 = ['0', 0.00698]  # name, price (per CPU per hour)
-    z2 = ['1', 0.00798]
-    z3 = ['2', 0.00598]
+    z1 = ['0', 0.06]  # name, price (per CPU per hour)
+    z2 = ['1', 0.07]
+    z3 = ['2', 0.05]
 
 for xx in CPUPrice:
     print(xx.value[0])

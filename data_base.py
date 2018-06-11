@@ -4,6 +4,7 @@ import traffic_generator
 import virtual_layer_elements
 import network_info as ni
 import threading, time
+from collections import defaultdict
 
 
 class DataBase(object):
@@ -17,7 +18,9 @@ class DataBase(object):
         self.tf_gen = None
         self.total_cpu_cost = 0
         self.latency = {}
-        self.basic_trans_capacity = 2  # Transmission capacity between VMs per CPU core in Gbps
+        # self.basic_trans_capacity = 2  # Transmission capacity between VMs per CPU core in Gbps
+        self.req_trans_fee = defaultdict(float)
+        self.all_used_vm = []
 
     def add_service_chain(self, sc):
         self.scs.add_sc(sc)
@@ -66,9 +69,9 @@ class DataBase(object):
         # print("XXXXXX", start_time, use_time)
         # print("Start a new VM:", vm)
         self.install_vnf_to_vm(vnf, processing_time, vm, start_time + vm.boot_time + vnf.install_time)
-        print(vm)
-        print("[VNF: " + str(vnf_type.value[0]) + ", VM: " + str(vm.index) + ", VNF processing time: " +
-              str(processing_time) + ", Actually total use time:" + str(use_time) + "]")
+        # print(vm)
+        # print("[VNF: " + str(vnf_type.value[0]) + ", VM: " + str(vm.index) + ", VNF processing time: " +
+        #       str(processing_time) + ", Actually total use time:" + str(use_time) + "]")
         timer = threading.Timer((vm.end_time - start_time) * ni.global_TS, self._end_vm, args=(vm,))
         # timer = threading.Thread(target=self._end_vm, args=(vm,))
         # time.sleep((end_time - start_time) * ni.global_TS)
@@ -97,8 +100,6 @@ class DataBase(object):
             self.install_vnf_to_vm(vnf, processing_time, vm, start_process_vnf)
             return vnf.process_time, vnf.start_time
 
-
-
     # Estimate the time a VM should keep alive, the result returned includes the processing time of a VNF
     # and its installation time and idle length, but not includes the boot time of a VM
     def estimate_vm_alive_length(self, vnf, data_size, cpu_cores):
@@ -125,10 +126,11 @@ class DataBase(object):
         # if vm.end_time - vm.vnfs[1].start_time < 0:
         #     print("VM:", vm, "may have closed")
         vm.vnfs.pop(0)
-        print("VM still has task,next end time:", next_time)
-        t = threading.Thread(target=self._end_vm, args=(vm,))
-        time.sleep(next_time * ni.global_TS)
-        t.start()
+        # print("VM still has task,next end time:", next_time)
+        timer = threading.Timer(next_time * ni.global_TS, self._end_vm, args=(vm,))
+        # t = threading.Thread(target=self._end_vm, args=(vm,))
+        # time.sleep(next_time * ni.global_TS)
+        timer.start()
         # self.rLock.release()
         # t.join()
 
@@ -136,33 +138,17 @@ class DataBase(object):
     def _start_new_vm(self, start_time, use_time, cpu, location):
         vm = virtual_layer_elements.VirtualMachine(start_time, use_time, cpu, location)
         self.vms.append(vm)
+        self.all_used_vm.append(vm)
         return vm
 
     # Install a VNF to a VM
     def install_vnf_to_vm(self, vnf, processing_time, vm, start_time):
         if vm not in self.vms:
-            print("Install VNF Error: no such VM")
+            print("**Error in fun. install_vnf_to_vm: no such VM")
+            return -1
         vnf.set_processing_time(processing_time)  # Update the processing time of the instance
         vnf.set_start_time(start_time)  # Update the start processing time
-        if vm in self.vms:
-            vm.install_vnf(vnf)
-        else:
-            print("There is no such VM")
-
-    # Get the set of instances of VNFs in the network
-    # The input parameter is the VNF name
-    # def get_instances_of_vnf(self, vnf_type):
-    #     # print("Input:", vnf_type.name)
-    #     if vnf_type not in service_chain.NetworkFunctionName:
-    #         print("Error: No such VNF type")
-    #         return None
-    #     results = []
-    #     for vnf in self.vnfs:
-    #         # print("!!!VNF", vnf)
-    #         if vnf.name == vnf_type.value[0]:
-    #             results.append(vnf)
-    #             # print("Find:", vnf)
-    #     return results
+        vm.install_vnf(vnf)
 
     # Get the set of VMs hosting the input VNF type
     def get_vms_w_vnf(self, vnf_type):
@@ -196,12 +182,11 @@ class DataBase(object):
             for vm in to_remove:
                 vms.remove(vm)
 
-
     # calculate the cost of a VM during its alive length
     def get_cost_of_vm(self, vm):
         live_length = vm.end_time - vm.start_time  # in second
         price = self.network.get_price_of_node(vm.location)
-        return live_length * price * vm.cpu_cores / 3600
+        return live_length * price * vm.cpu_cores / 3600  # the price is for per hour
 
     # Store the latency information for a request
     def store_latency(self, req, latency):
@@ -228,10 +213,18 @@ class DataBase(object):
                 counter += 1
         return counter / len(self.tf_gen.req_set)
 
+    # Internet ingress/egress latency and fee
+    def internet_latency_fee(self, data_size, src, dst):
+        default_cap = ni.trans_cap  # Assuming the capacity is 10 Gbps
+        trans_latency = int(data_size / default_cap / ni.global_TS)
+        pro_latency = self.propagation_latency(src, dst)
+        fee = ni.in_e_gress_fee * data_size
+        return trans_latency, pro_latency, fee
+
     # Transmission fee and latency
     def trans_latency_fee(self, data_size, src_vm, dst_vm, capacity=-1):
         if capacity == -1:
-            latency = int(data_size / (src_vm.cpu_cores * self.basic_trans_capacity) / ni.global_TS)
+            latency = int(data_size / (src_vm.cpu_cores * ni.basic_trans_capacity) / ni.global_TS)
         else:
             latency = int(data_size / capacity / ni.global_TS)
         if self.network.get_zone(src_vm.location) == self.network.get_zone(dst_vm.location):
@@ -242,6 +235,21 @@ class DataBase(object):
 
     # Propagation latency
     def propagation_latency(self, src, dst):
-        dis= self.network.get_shortest_dis(src, dst)
+        dis = self.network.get_shortest_dis(src, dst)
         return dis / ni.light_speed
+
+    # Total cost
+    def get_cost(self):
+        while self.vms:
+            # print("STILL HAVE!!")
+            continue
+        print("CPU cost ($):" + str(self.total_cpu_cost))
+        trans_data_cost = sum(self.req_trans_fee.values())
+        print("Data transmission cost ($):" + str(trans_data_cost))
+
+    # All vm used
+    def get_used_vm_no(self):
+        print("Have used " + str(len(self.all_used_vm)) + " VMs in total")
+        return len(self.all_used_vm)
+
 

@@ -74,8 +74,12 @@ class Graph(object):
 
     def shortest_path(self, src, dst):
         paths = self.shortest_paths(src)
-        path = paths[0][dst]
-        dis = paths[1][dst]
+        if src == dst:
+            path = [src, dst]
+            dis = 0
+        else:
+            path = paths[0][dst]
+            dis = paths[1][dst]
         return path, dis
 
     def print_topology(self):
