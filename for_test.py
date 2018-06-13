@@ -65,16 +65,20 @@ import threading, time
 # for t in thread_list:
 #     t.join()
 
-from enum import Enum, unique
-class CPUPrice(Enum):
-    z1 = ['0', 0.06]  # name, price (per CPU per hour)
-    z2 = ['1', 0.07]
-    z3 = ['2', 0.05]
-
-for xx in CPUPrice:
-    print(xx.value[0])
-
-
+# from enum import Enum, unique
+# class CPUPrice(Enum):
+#     z1 = ['0', 0.06]  # name, price (per CPU per hour)
+#     z2 = ['1', 0.07]
+#     z3 = ['2', 0.05]
+#
+# for xx in CPUPrice:
+#     print(xx.value[0])
+def ka():
+    return "hello"
+with open('result', 'w') as f:
+    for i in range(10):
+        f.write(str(i) + " " + ka() + "\n")
+# f.close()
 
 
 

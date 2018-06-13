@@ -3,6 +3,7 @@ import random
 import request_type
 import numpy as np
 import network_info as ni
+import math
 
 
 class TrafficGenerator(object):
@@ -16,10 +17,11 @@ class TrafficGenerator(object):
         self.time_slot_length = ni.global_TS  # Length of a time slot in ms
         self.control_factor = 0.1  # To control the arriving time
         # The deadline for a request is basic_deadline + deadline_length * random()
-        self.basic_deadline = 200
-        self.deadline_length = 100
+        self.basic_deadline = 40
+        self.deadline_length = 40
+        self.ddl_scale = 1.2  # The scale factor for deadline according to the processing time
         # The optional data size of a request
-        self.basic_size = 0.5
+        self.basic_size = 10
         self.size_length = 9.5
         # Sleep time
         self.sleep_time =[]
@@ -49,6 +51,18 @@ class TrafficGenerator(object):
         for i in range(self._max_req_num):
             self.req_set.append(self.generate_one_req(sc_size, user_node, data_size_flag))
             self.req_set[i].arr_time = arr_time[i]
+
+    # Modify the deadline for each request, return the average deadline of all requests
+    def deadline_revise(self, data_base):
+        ave = 0
+        for req in self.req_set:
+            req_vnfs = list(data_base.scs.get_sc(req.sc))  # Get the name of vnfs
+            est_time = 0
+            for vnf_type in req_vnfs:
+                est_time += req.data_size / vnf_type.value[2] / ni.global_TS
+            req.deadline = math.ceil(est_time * self.ddl_scale)  # the scale factor
+            ave += est_time
+        return ave / len(self.req_set)
 
     def customize_request(self, src_node, dst_node,  sc_req, data_size, arr_time, ddl):
         new_request = request_type.Request(src_node, dst_node, sc_req, data_size, ddl)

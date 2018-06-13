@@ -72,5 +72,8 @@ class VirtualMachine(object):
         # return "[VM " + str(self.index) + ", CPU core: " + str(self.cpu_cores) + \
         #     ", now running:" + self.vnfs[0].name + ", next available time:" + str(self.available_time) + \
         #        ", end time:" + str(self.end_time) + "]"
-        return "[VM " + str(self.index) + ", CPU core: " + str(self.cpu_cores) + \
-             str(self.end_time) + "]"
+        return "[VM " + str(self.index) + ", CPU core: " + str(self.cpu_cores) + " start_time:" + str(self.start_time) + " end_time:" + str(self.end_time) + "]"
+
+    def basic_info(self):
+        return "VM:" + str(self.index) + ", CPU:" + str(self.cpu_cores) + ", len: " \
+               + str(round(self.end_time - self.start_time, 2))

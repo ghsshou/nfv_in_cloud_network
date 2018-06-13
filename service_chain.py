@@ -3,17 +3,17 @@ from enum import Enum, unique
 
 @unique
 class NetworkFunctionName(Enum):
-    fun_1 = ['0', 0, 200]  # name, thread, throughput
-    fun_2 = ['1', 1, 100]
-    fun_3 = ['2', 0, 300]
-    fun_4 = ['3', 1, 500]
+    fun_1 = ['0', 1, 2]  # name, thread, throughput
+    fun_2 = ['1', 1, 1]
+    fun_3 = ['2', 1, 3]
+    fun_4 = ['3', 1, 5]
 
 
 # This is an instance of a VNF
 class NetworkFunction(object):
     counter = 0
 
-    def __init__(self, name):
+    def __init__(self, name, idle_length):
         self.install_time = 1  # default installation time of a VNF is one TS
         self.name = name.value[0]
         # 0: single thread, 1: multi-thread
@@ -23,7 +23,7 @@ class NetworkFunction(object):
         NetworkFunction.counter += 1
         self.process_time = 0  # The time for processing time
         self.start_time = 0  # The start processing time
-        self.idle_length = 60
+        self.idle_length = idle_length
         self.active_state = True
 
     def new_function(self):
@@ -40,6 +40,9 @@ class NetworkFunction(object):
 
     def __str__(self):
         return "VNF " + self.name
+
+    def basic_info(self):
+        return str(self.index) + ": " + str(self.start_time) + "--" + str(self.process_time)
 
 
 class ServiceChains(object):

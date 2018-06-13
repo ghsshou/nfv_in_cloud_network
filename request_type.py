@@ -18,5 +18,5 @@ class Request(object):
 
 
 if __name__ == "__main__":
-    print(Request("0", "0", 0, 0, 0, 0))
+    print(str(Request("0", "0", 0, 0, 0, 0)))
     print(Request("1", "1", 1, 1, 1, 1))

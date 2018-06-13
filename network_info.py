@@ -4,10 +4,13 @@ from enum import Enum, unique
 
 global_TS = 0.1  # The length of a time slot in s
 trans_fee = 0.01  # Price of data transferred between VMs in different zones, in Gb
-light_speed = 20000000  # km/s
+light_speed = 2000000  # km/s
 in_e_gress_fee = 0.01  # the fee of traffic ingress and egress Internet (per GB)
-trans_cap = 1000  # Ingress and egress transmission capacity
-basic_trans_capacity = 100  # Transmission capacity between VMs per CPU core in Gbps
+trans_cap = 100  # Ingress and egress transmission capacity
+basic_trans_capacity = 2  # Transmission capacity between VMs per CPU core in Gbps
+
+basic_idle_length = 20  # The initial idle length for a VNF
+idle_len_inc_step = 0  # The step increased for idle length
 
 
 class NetworkInfo(object):

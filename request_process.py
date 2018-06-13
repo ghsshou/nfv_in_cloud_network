@@ -5,59 +5,62 @@ import virtual_layer_elements as vle
 import service_chain
 from collections import defaultdict
 
-
-def process_one_req(data_base, req):
-    print("***************************")
-    print("Now process: ", req)
-    req_vnfs = list(data_base.scs.get_sc(req.sc))  # Get the name of vnfs
-    vm_w_vnf = {}
-    est_time = data_base.estimate_start_prc_time(req.arr_time, req.data_size, data_base.scs.get_sc(req.sc))
-    other_vnf_pro_times = []
-    for vnf_type in req_vnfs:
-        print("VNF:" + vnf_type.value[0] + ", ESPT:", est_time[vnf_type])  # ESPT: Estimated start processing time
-        # vnf = data_base.get_instances_of_vnf(vnf_type)
-        # print(vnf)
-        vms = data_base.get_vms_w_vnf(vnf_type)
-        data_base.check_vms_at_time(vms, vnf_type, est_time[vnf_type])
-        if vms:
-            vm_w_vnf[vnf_type] = vms
-            print(vms[0])
-            (process_t, start_t) = data_base.update_vm_w_vnf(vnf_type, vms[0], req.data_size, est_time[vnf_type])
-            print("pro:", process_t, "start_t:", start_t)
-            index = req_vnfs.index(vnf_type)
-            if index < len(req_vnfs) - 1:
-                next_vnf = req_vnfs[index + 1]
-                est_time[next_vnf] = start_t + process_t
-                other_vnf_pro_times.append(process_t + start_t - est_time[vnf_type])
-            elif index == len(req_vnfs) - 1:
-                latency = start_t + process_t - req.arr_time
-                data_base.store_latency(req, latency)
-        else:
-            cpu_core = cal_cpu_cores(vnf_type, req.data_size, req.deadline, other_vnf_pro_times)
-            print("CPU_required: " + str(cpu_core))
-            (process_t, start_t) = data_base.start_new_vm(est_time[vnf_type], cpu_core, '0', vnf_type, req.data_size)
-            print("pro:", process_t, "start_t:", start_t)
-            index = req_vnfs.index(vnf_type)
-            if index < len(req_vnfs) - 1:
-                next_vnf = req_vnfs[index + 1]
-                est_time[next_vnf] = start_t + process_t
-                other_vnf_pro_times.append(process_t + start_t - est_time[vnf_type])
-            elif index == len(req_vnfs) - 1:
-                latency = start_t + process_t - req.arr_time
-                data_base.store_latency(req, latency)
-            # data_base.install_vnf_to_vm(vnf_type, new_vm, req.data_size)
-            # print(new_vm)
-            # shut_down_vm_after(data_base, new_vm, 20)
+#
+# def process_one_req(data_base, req):
+#     print("***************************")
+#     print("Now process: ", req)
+#     req_vnfs = list(data_base.scs.get_sc(req.sc))  # Get the name of vnfs
+#     vm_w_vnf = {}
+#     est_time = data_base.estimate_start_prc_time(req.arr_time, req.data_size, data_base.scs.get_sc(req.sc))
+#     other_vnf_pro_times = []
+#     for vnf_type in req_vnfs:
+#         print("VNF:" + vnf_type.value[0] + ", ESPT:", est_time[vnf_type])  # ESPT: Estimated start processing time
+#         # vnf = data_base.get_instances_of_vnf(vnf_type)
+#         # print(vnf)
+#         vms = data_base.get_vms_w_vnf(vnf_type)
+#         data_base.check_vms_at_time(vms, vnf_type, est_time[vnf_type])
+#         if vms:
+#             vm_w_vnf[vnf_type] = vms
+#             print(vms[0])
+#             (process_t, start_t) = data_base.update_vm_w_vnf(vnf_type, vms[0], req.data_size, est_time[vnf_type])
+#             print("pro:", process_t, "start_t:", start_t)
+#             index = req_vnfs.index(vnf_type)
+#             if index < len(req_vnfs) - 1:
+#                 next_vnf = req_vnfs[index + 1]
+#                 est_time[next_vnf] = start_t + process_t
+#                 other_vnf_pro_times.append(process_t + start_t - est_time[vnf_type])
+#             elif index == len(req_vnfs) - 1:
+#                 latency = start_t + process_t - req.arr_time
+#                 data_base.store_latency(req, latency)
+#         else:
+#             cpu_core = cal_cpu_cores(vnf_type, req.data_size, req.deadline, other_vnf_pro_times)
+#             if cpu_core == -1:
+#                 data_base.latency[req] = -1
+#                 return -1
+#             print("CPU_required: " + str(cpu_core))
+#             (process_t, start_t) = data_base.start_new_vm(est_time[vnf_type], cpu_core, '0', vnf_type, req.data_size)
+#             print("pro:", process_t, "start_t:", start_t)
+#             index = req_vnfs.index(vnf_type)
+#             if index < len(req_vnfs) - 1:
+#                 next_vnf = req_vnfs[index + 1]
+#                 est_time[next_vnf] = start_t + process_t
+#                 other_vnf_pro_times.append(process_t + start_t - est_time[vnf_type])
+#             elif index == len(req_vnfs) - 1:
+#                 latency = start_t + process_t - req.arr_time
+#                 data_base.store_latency(req, latency)
+#             # data_base.install_vnf_to_vm(vnf_type, new_vm, req.data_size)
+#             # print(new_vm)
+#             # shut_down_vm_after(data_base, new_vm, 20)
 
 
 # Estimate time using Eqn. 1, because a new VM will started, the boot time and install time should be considered
 def cal_cpu_cores(vnf_type, data_size, ddl, other_vnf_pro_times):
     if vnf_type.value[1] == 0:  # single thread
         return 1
-    max_time = ddl - sum(other_vnf_pro_times)
+    max_time = ddl - math.ceil(sum(other_vnf_pro_times))
     max_time -= vle.VirtualMachine.boot_time  # Consider the boot time
-    max_time -= service_chain.NetworkFunction(vnf_type).install_time  # consider the install time of a VNF
-    if max_time < 0:
+    max_time -= service_chain.NetworkFunction(vnf_type, 0).install_time  # consider the install time of a VNF
+    if max_time <= 0:
         print("**cal_cpu_cores: Request will be blocked due to latency requirement, passed time:",
               sum(other_vnf_pro_times), "DDL:", ddl)
         return -1
@@ -68,27 +71,31 @@ def algorithm_x(data_base, req):
     print("***************************")
     print("Now process: ", req)
     req_vnfs = list(data_base.scs.get_sc(req.sc))  # Get the name of vnfs
+    # Update the vnf visit frequency information
+    for vnf_type in req_vnfs:
+        # print("???", vnf_type)
+        data_base.vary_vnf_frequency(vnf_type)
     vm_w_vnf = {}
     est_time = data_base.estimate_start_prc_time(req.arr_time, req.data_size, data_base.scs.get_sc(req.sc))
     #  First, get all available VMs at certain time slot
     for vnf_type in req_vnfs:
-        # print("VNF:" + vnf_type.value[0] + ", ESPT:", est_time[vnf_type])  # ESPT: Estimated start processing time
+        print("VNF:" + vnf_type.value[0] + ", ESPT:", est_time[vnf_type])  # ESPT: Estimated start processing time
         vm_w_vnf[vnf_type] = data_base.get_vms_w_vnf(vnf_type)
         data_base.check_vms_at_time(vm_w_vnf[vnf_type], vnf_type, est_time[vnf_type])
     # Second, check the zone of each VM
     zones_vnf = defaultdict(list)
     for vnf_type in req_vnfs:
-        # print("Now find:", vnf_type)
+        print("Now find:", vnf_type)
         if vm_w_vnf[vnf_type]:
             zones = []
             for vm in vm_w_vnf[vnf_type]:
-                # print("ALGORITHM_X: Find VM:", vm)
+                print("ALGORITHM_X: Find VM:", vm)
                 zone = data_base.network.get_zone(vm.location)
                 zones.append(zone)
             zones_vnf[vnf_type] = zones
     # Third, if there is at least one VNF in a certain zone:
     if zones_vnf:
-        # print("ALGORITHM_X: Exist some vnfs already!")
+        print("ALGORITHM_X: Exist some vnfs already!")
         (best_zone, vnfs_no) = select_best_zone(req_vnfs, zones_vnf)
         # print("ALGORITHM_X: best zone:", best_zone, "max_vnf_no:", vnfs_no)
         # if find a zone hosting at least 2 vnfs, that is best_zone != none
@@ -139,6 +146,7 @@ def place_unmapped_vnfs(data_base, unmaped_vnf, mapped_vms, req_vnfs, req, est_t
             # first, check its previous one
             vm = check_vms_for_vnf(placed_vms[req_vnfs[index - 1]], vnf_type, est_time, req)
             if vm:
+                print(str(index), vm)
                 pro_latency = data_base.propagation_latency(placed_vms[req_vnfs[index - 1]].location, vm.location)
                 (tran_latency, trans_fee) = data_base.trans_latency_fee(req.data_size,
                                                                         placed_vms[req_vnfs[index - 1]], vm)
@@ -156,6 +164,7 @@ def place_unmapped_vnfs(data_base, unmaped_vnf, mapped_vms, req_vnfs, req, est_t
             else:
                 other_vm = find_nearest_vnf_in_other_zone(vnf_type, data_base, req, est_time)
                 if other_vm:
+                    print(str(index), other_vm)
                     pro_latency = data_base.propagation_latency(placed_vms[req_vnfs[index - 1]].location,
                                                                 other_vm.location)
                     (tran_latency, trans_fee) = data_base.trans_latency_fee(req.data_size,
@@ -173,10 +182,10 @@ def place_unmapped_vnfs(data_base, unmaped_vnf, mapped_vms, req_vnfs, req, est_t
                     placed_vms[vnf_type] = other_vm
                 else:
                     pro_latency = data_base.propagation_latency(placed_vms[req_vnfs[index - 1]].location,
-                                                                new_vm.location)
+                                                                cand_dc)
                     (tran_latency, trans_fee) = data_base.trans_latency_fee(req.data_size,
                                                                             placed_vms[req_vnfs[index - 1]],
-                                                                            new_vm)
+                                                                            cand_dc)
                     # print("propagation latency from", placed_vms[req_vnfs[index - 1]].location, "to", new_vm.location,
                     #       "is:",
                     #       pro_latency)
@@ -187,12 +196,17 @@ def place_unmapped_vnfs(data_base, unmaped_vnf, mapped_vms, req_vnfs, req, est_t
                     other_vnf_pro_times.append(pro_latency + tran_latency)
                     new_vm = create_vm_for_vnf(data_base, index, vnf_type, req_vnfs, req, est_time, other_vnf_pro_times,
                                                cand_dc)
+                    if not new_vm or new_vm == -1:
+                        data_base.req_vm_info[req] = None
+                        return None
                     placed_vms[vnf_type] = new_vm
+                    print(str(index), new_vm)
 
         # the first vnf is unmapped
         elif index == 0 and vnf_type in unmaped_vnf:
             other_vm = find_nearest_vnf_in_other_zone(vnf_type, data_base, req, est_time)
             if other_vm:
+                print(str(index), other_vm)
                 (tran_latency, pro_latency, trans_fee) = data_base.internet_latency_fee(req.data_size,
                                                                                         req.src, other_vm.location)
                 # print("propagation latency from", req.src, "to", other_vm.location, "is:", pro_latency)
@@ -215,11 +229,16 @@ def place_unmapped_vnfs(data_base, unmaped_vnf, mapped_vms, req_vnfs, req, est_t
                 other_vnf_pro_times.append(pro_latency + tran_latency)
                 new_vm = create_vm_for_vnf(data_base, index, vnf_type, req_vnfs, req, est_time, other_vnf_pro_times,
                                            cand_dc)
+                if not new_vm or new_vm == -1:
+                    data_base.req_vm_info[req] = None
+                    return None
                 placed_vms[vnf_type] = new_vm
+                print(str(index), new_vm)
 
         # have found suitable VM to host.
         else:
             vm = mapped_vms[vnf_type]
+            print(str(index), vm)
             # if it is the first vnf, there is a transmission latency and
             # propagation latency from the Internet to the vm
             if index == 0:
@@ -247,6 +266,7 @@ def place_unmapped_vnfs(data_base, unmaped_vnf, mapped_vms, req_vnfs, req, est_t
             install_vnf_to_vm(data_base, index, vnf_type, req_vnfs, vm, req, est_time, other_vnf_pro_times)
             placed_vms[vnf_type] = vm
             continue
+    data_base.req_vm_info[req] = placed_vms
 
 
 # install a vnf to a VM and update the time
@@ -264,13 +284,16 @@ def install_vnf_to_vm(data_base, index, vnf_type, req_vnfs, vm, req, est_time, o
         (trans_latency, pro_latency, fee) = data_base.internet_latency_fee(req.data_size, vm.location, req.dst)
         latency += pro_latency + trans_latency
         data_base.req_trans_fee[req] += fee
+        # print("XXXX", latency)
         data_base.store_latency(req, latency)
 
 
 # create a VM for a VNF
 def create_vm_for_vnf(data_base, index, vnf_type, req_vnfs, req, est_time, other_vnf_pro_times, cand_dc):
     cpu_core = cal_cpu_cores(vnf_type, req.data_size, req.deadline, other_vnf_pro_times)
-    # print("CPU_required: " + str(cpu_core))
+    print("CPU_required: " + str(cpu_core))
+    if cpu_core == -1:
+        return None
     (process_t, start_t, new_vm) = data_base.start_new_vm(est_time[vnf_type], cpu_core, cand_dc, vnf_type,
                                                           req.data_size)
     # # if it is the first vnf, there is a propagation latency and transmission latency from the src to the vm location
@@ -288,6 +311,7 @@ def create_vm_for_vnf(data_base, index, vnf_type, req_vnfs, req, est_time, other
         (trans_latency, pro_latency, fee) = data_base.internet_latency_fee(req.data_size, new_vm.location, req.dst)
         latency += pro_latency + trans_latency
         data_base.req_trans_fee[req] += fee
+        # print("XXXX", latency)
         data_base.store_latency(req, latency)
     return new_vm
 
@@ -319,6 +343,7 @@ def create_vms_for_sc(req_vnfs, req, data_base, est_time):
             vm = check_vms_for_vnf(created_vms, vnf_type, est_time, req)
             # if we get a vm that is suit for the current VNF
             if vm:
+                print(str(index), vm)
                 pro_latency = data_base.propagation_latency(placed_vms[req_vnfs[index - 1]].location, vm.location)
                 (tran_latency, trans_fee) = data_base.trans_latency_fee(req.data_size,
                                                                         placed_vms[req_vnfs[index - 1]], vm)
@@ -344,12 +369,13 @@ def create_vms_for_sc(req_vnfs, req, data_base, est_time):
                                                                                        req.dst)
                     latency += pro_latency + trans_latency
                     data_base.req_trans_fee[req] += fee
+                    # print("XXXX", latency)
                     data_base.store_latency(req, latency)
                 continue
             # if no qualified vm or it's the first vnf, a new VM should be set up
             pro_latency = data_base.propagation_latency(placed_vms[req_vnfs[index - 1]].location, cand_dc)
             (tran_latency, trans_fee) = data_base.trans_latency_fee(req.data_size,
-                                                                    placed_vms[req_vnfs[index - 1]], vm)
+                                                                    placed_vms[req_vnfs[index - 1]], cand_dc)
             # print("propagation latency from", placed_vms[req_vnfs[index - 1]].location, "to", vm.location, "is:",
             #       pro_latency)
             # print("transmission latency from", placed_vms[req_vnfs[index - 1]], "to", vm, "is:",
@@ -358,12 +384,16 @@ def create_vms_for_sc(req_vnfs, req, data_base, est_time):
             est_time[vnf_type] += pro_latency + tran_latency
             other_vnf_pro_times.append(pro_latency + tran_latency)
             cpu_core = cal_cpu_cores(vnf_type, req.data_size, req.deadline, other_vnf_pro_times)
-            # print("CPU_required: " + str(cpu_core))
+            print("CPU_required: " + str(cpu_core))
+            if cpu_core == -1:
+                data_base.req_vm_info[req] = None
+                return None
             (process_t, start_t, new_vm) = data_base.start_new_vm(est_time[vnf_type], cpu_core, cand_dc, vnf_type,
                                                                   req.data_size)
             created_vms.append(new_vm)
-            placed_vms[vnf_type] = [new_vm]
-            # print("pro:", process_t, "start_t:", start_t)
+            placed_vms[vnf_type] = new_vm
+            print(str(index), new_vm)
+            print("pro:", process_t, "start_t:", start_t)
             if index < len(req_vnfs) - 1:
                 next_vnf = req_vnfs[index + 1]
                 est_time[next_vnf] = start_t + process_t
@@ -375,6 +405,7 @@ def create_vms_for_sc(req_vnfs, req, data_base, est_time):
                                                                                    req.dst)
                 latency += pro_latency + trans_latency
                 data_base.req_trans_fee[req] += fee
+                # print("XXXX", latency)
                 data_base.store_latency(req, latency)
         # index = 0
         else:
@@ -387,11 +418,16 @@ def create_vms_for_sc(req_vnfs, req, data_base, est_time):
             est_time[vnf_type] += pro_latency + tran_latency
             other_vnf_pro_times.append(pro_latency + tran_latency)
             cpu_core = cal_cpu_cores(vnf_type, req.data_size, req.deadline, other_vnf_pro_times)
-            # print("CPU_required: " + str(cpu_core))
+            print("CPU_required: " + str(cpu_core))
+            if cpu_core == -1:
+                data_base.req_vm_info[req] = None
+                return None
             (process_t, start_t, new_vm) = data_base.start_new_vm(est_time[vnf_type], cpu_core, cand_dc, vnf_type,
                                                                   req.data_size)
             created_vms.append(new_vm)
             placed_vms[vnf_type] = new_vm
+            print(str(index), new_vm)
+    data_base.req_vm_info[req] = placed_vms
 
 
 # Check if there is any qualified VM in the set to run a VNF
@@ -413,9 +449,9 @@ def check_vms_for_vnf(vms, vnf_type, est_time, req):
             install_time = 0
             # if the vm has already installed such a vnf, no installation is needed
             if not vm.host_vnf(vnf_type):
-                install_time += service_chain.NetworkFunction(vnf_type).install_time
+                install_time += service_chain.NetworkFunction(vnf_type, 0).install_time
             process_time = req.data_size / (vm.cpu_cores * vnf_type.value[2])
-            if est_time[vnf_type] + process_time + install_time < req.deadline - req.arr_time:
+            if est_time[vnf_type] + process_time + install_time < req.deadline + req.arr_time:
                 cand_vms.append(vm)
     final_vm = None
     cpu_cores = 0
