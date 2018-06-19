@@ -20,17 +20,20 @@ if __name__ == "__main__":
     # Service chain information
     # new_sc = (service_chain.NetworkFunctionName.fun_1, service_chain.NetworkFunctionName.fun_2)
     # data_base.scs.add_sc(new_sc)
-    new_sc = [service_chain.NetworkFunctionName.fun_1, service_chain.NetworkFunctionName.fun_2,
-              service_chain.NetworkFunctionName.fun_4]
-    data_base.scs.add_sc(new_sc)
-    new_sc = (service_chain.NetworkFunctionName.fun_2, service_chain.NetworkFunctionName.fun_4)
-    data_base.scs.add_sc(new_sc)
-    new_sc = (service_chain.NetworkFunctionName.fun_1, service_chain.NetworkFunctionName.fun_4)
+    new_sc = [service_chain.NetworkFunctionName.fun_1, service_chain.NetworkFunctionName.fun_2
+              ]
     data_base.scs.add_sc(new_sc)
     new_sc = (service_chain.NetworkFunctionName.fun_3, service_chain.NetworkFunctionName.fun_4)
     data_base.scs.add_sc(new_sc)
+    new_sc = (service_chain.NetworkFunctionName.fun_1, service_chain.NetworkFunctionName.fun_4)
+    data_base.scs.add_sc(new_sc)
+    new_sc = (service_chain.NetworkFunctionName.fun_2, service_chain.NetworkFunctionName.fun_4)
+    data_base.scs.add_sc(new_sc)
     new_sc = (service_chain.NetworkFunctionName.fun_1, service_chain.NetworkFunctionName.fun_2,
               service_chain.NetworkFunctionName.fun_3, service_chain.NetworkFunctionName.fun_4)
+    data_base.scs.add_sc(new_sc)
+    new_sc = (service_chain.NetworkFunctionName.fun_1, service_chain.NetworkFunctionName.fun_3,
+              service_chain.NetworkFunctionName.fun_4)
     data_base.scs.add_sc(new_sc)
     # data_base.scs.print_all_scs()
     # Network initialize
@@ -39,7 +42,7 @@ if __name__ == "__main__":
     # Traffic generator initialize
     # Para: lambda, mu, request number, optional data size
     traffic_num = 1000
-    data_base.set_traffic_generator(5, 0.001, traffic_num, [16, 18, 20])
+    data_base.set_traffic_generator(5, 0.001, traffic_num, [4, 6, 8, 10])
     # data_base.tf_gen.print_all_requests()
     # l = data_base.tf_gen.print_sleep_time()
     # x = list(range(1000))
@@ -60,7 +63,7 @@ if __name__ == "__main__":
     for i in range(traffic_num):
         # request_process.process_one_req(data_base, data_base.tf_gen.req_set[i])
         request_process.algorithm_x(data_base, data_base.tf_gen.req_set[i])
-        time.sleep(data_base.tf_gen.sleep_time[i] * network_info.global_TS)
+        time.sleep(data_base.tf_gen.sleep_time[i] * network_info.global_TS * data_base.tf_gen.control_factor)
 
     # time.sleep(3)
     data_base.get_cost()

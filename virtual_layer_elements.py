@@ -2,7 +2,7 @@ from math import inf
 
 
 class VirtualMachine(object):
-    boot_time = 100  # Boot time of a VM, in time slot
+    boot_time = 10  # Boot time of a VM, in time slot
     counter = 0
 
     # When start a new VM, assume that it is used to run a VNF. So, we should set the start time, use time. use time is

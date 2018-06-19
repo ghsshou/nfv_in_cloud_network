@@ -102,7 +102,7 @@ class DataBase(object):
     # Install a VNF to an existed VM
     def update_vm_w_vnf(self, vnf_type, vm, data_size, start_time):
         vnf = service_chain.NetworkFunction(vnf_type, self.vnf_idle_length[vnf_type])
-        print("SSS:", vnf.name, "IDLE Len:", vnf.idle_length)
+        # print("SSS:", vnf.name, "IDLE Len:", vnf.idle_length)
         use_time = self.estimate_vm_alive_length(vnf, data_size, vm.cpu_cores)
         processing_time = use_time - vnf.idle_length - vnf.install_time
         start_process_vnf = vm.available_time
@@ -145,7 +145,7 @@ class DataBase(object):
         #     print("VM:", vm, "may have closed")
         vm.vnfs.pop(0)
         # print("VM still has task,next end time:", next_time)
-        timer = threading.Timer(next_time * ni.global_TS, self._end_vm, args=(vm,))
+        timer = threading.Timer(next_time * ni.global_TS * self.tf_gen.control_factor, self._end_vm, args=(vm,))
         # t = threading.Thread(target=self._end_vm, args=(vm,))
         # time.sleep(next_time * ni.global_TS)
         timer.start()
@@ -233,7 +233,7 @@ class DataBase(object):
         counter = 0
         for req in self.latency:
             if self.latency[req][0] == -1:
-                # print("Blocked req:", req, "latency:", self.latency[req][1])
+                print("Blocked req:", req, "latency:", self.latency[req][1])
                 counter += 1
         # print("self req no", counter, len(self.tf_gen.req_set))
         return round(counter / len(self.tf_gen.req_set), 2)

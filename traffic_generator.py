@@ -19,7 +19,7 @@ class TrafficGenerator(object):
         # The deadline for a request is basic_deadline + deadline_length * random()
         self.basic_deadline = 40
         self.deadline_length = 40
-        self.ddl_scale = 0.88  # The scale factor for deadline according to the processing time
+        self.ddl_scale = 0.89  # The scale factor for deadline according to the processing time
         # The optional data size of a request
         self.basic_size = 1
         self.size_length = 4
@@ -83,7 +83,7 @@ class TrafficGenerator(object):
 
     def poisson_traffic(self, lam, max_num):
         traffic = np.random.poisson(lam, max_num)
-        traffic = [x / self.time_slot_length * self.control_factor for x in traffic]
+        traffic = [x / self.time_slot_length for x in traffic]
         ave_duetime = np.mean(traffic)
         result = []
         val = 0
