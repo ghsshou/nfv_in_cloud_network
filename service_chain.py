@@ -3,9 +3,9 @@ from enum import Enum, unique
 
 @unique
 class NetworkFunctionName(Enum):
-    fun_1 = ['0', 1, 2]  # name, thread, throughput
+    fun_1 = ['0', 0, 2]  # name, thread, throughput
     fun_2 = ['1', 1, 1]
-    fun_3 = ['2', 1, 3]
+    fun_3 = ['2', 0, 3]
     fun_4 = ['3', 1, 5]
 
 

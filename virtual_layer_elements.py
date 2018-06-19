@@ -2,7 +2,7 @@ from math import inf
 
 
 class VirtualMachine(object):
-    boot_time = 5  # Boot time of a VM, in time slot
+    boot_time = 100  # Boot time of a VM, in time slot
     counter = 0
 
     # When start a new VM, assume that it is used to run a VNF. So, we should set the start time, use time. use time is
@@ -25,22 +25,24 @@ class VirtualMachine(object):
         #     print("Error: Cannot add the VNF to this VM")
         #     return -1
         # print("XXXXX", len(self.vnfs))
+        if self.state == 'Closed':
+            return -1
         if len(self.vnfs) >= 1:
             # print("Now appending a VNF to the VM")
             # Next update the end time
             existed_flag = False
-            for val in self.vnfs:
-                # print("XXXX:", val.name, vnf.name)
-                if val.name == vnf.name:
-                    existed_flag = True
-                    break
+            # for val in self.vnfs:
+            #     # print("XXXX:", val.name, vnf.name)
+            #     if val.name == vnf.name:
+            #         existed_flag = True
+            #         break
             self.vnfs.append(vnf)
-            if not existed_flag:
+            # if not existed_flag:
                 # print("XXXXSSSS")
-                self.end_time = self.available_time + vnf.install_time + vnf.process_time + vnf.idle_length
+            self.end_time = vnf.start_time + vnf.process_time + vnf.idle_length
             # if two vnfs are the same type, there is no need to install again
-            else:
-                self.end_time = self.available_time + vnf.process_time + vnf.idle_length
+            # else:
+            #     self.end_time = self.available_time + vnf.process_time + vnf.idle_length
             self.available_time = self.end_time - self.vnfs[-1].idle_length
             return 1
         if not self.vnfs:

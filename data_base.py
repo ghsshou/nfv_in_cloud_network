@@ -80,7 +80,7 @@ class DataBase(object):
 
     # Start a VM with start time, and finish time, using a thread
     def start_new_vm(self, start_time, cpu, location, vnf_type, data_size):
-        # print("SS", vnf_type)
+        print("SS", vnf_type, "IDLE LENGTH:", self.vnf_idle_length[vnf_type])
         vnf = service_chain.NetworkFunction(vnf_type, self.vnf_idle_length[vnf_type])
         use_time = self.estimate_vm_alive_length(vnf, data_size, cpu)
         processing_time = use_time - vnf.idle_length - vnf.install_time
@@ -100,29 +100,28 @@ class DataBase(object):
         return vnf.process_time, vnf.start_time, vm
 
     # Install a VNF to an existed VM
-    def update_vm_w_vnf(self, vnf_type, vm, data_size, *start_time):
+    def update_vm_w_vnf(self, vnf_type, vm, data_size, start_time):
         vnf = service_chain.NetworkFunction(vnf_type, self.vnf_idle_length[vnf_type])
+        print("SSS:", vnf.name, "IDLE Len:", vnf.idle_length)
+        use_time = self.estimate_vm_alive_length(vnf, data_size, vm.cpu_cores)
+        processing_time = use_time - vnf.idle_length - vnf.install_time
+        start_process_vnf = vm.available_time
+        if start_process_vnf < start_time:
+            start_process_vnf = start_time
         # if vm has already hosted such a VNF:
         if not vm.host_vnf(vnf_type):
-            use_time = self.estimate_vm_alive_length(vnf, data_size, vm.cpu_cores)
-            processing_time = use_time - vnf.idle_length - vnf.install_time
-            start_process_vnf = vm.available_time
             self.install_vnf_to_vm(vnf, processing_time, vm, start_process_vnf + vnf.install_time)
         # return the value cost in the VNF, including processing time and install time
             return vnf.process_time, vnf.start_time
         # else, no need for installation
         else:
-            use_time = self.estimate_vm_alive_length(vnf, data_size, vm.cpu_cores)
-            use_time = use_time - vnf.install_time
-            processing_time = use_time - vnf.idle_length
-            start_process_vnf = vm.available_time
             self.install_vnf_to_vm(vnf, processing_time, vm, start_process_vnf)
             return vnf.process_time, vnf.start_time
 
     # Estimate the time a VM should keep alive, the result returned includes the processing time of a VNF
     # and its installation time and idle length, but not includes the boot time of a VM
     def estimate_vm_alive_length(self, vnf, data_size, cpu_cores):
-        process_time = int(data_size / (vnf.throughput * cpu_cores) / ni.global_TS)  # Get how many TSs
+        process_time = math.ceil(data_size / (vnf.throughput * cpu_cores) / ni.global_TS)  # Get how many TSs
         use_time = process_time + vnf.install_time + vnf.idle_length
         return use_time
 
@@ -203,13 +202,14 @@ class DataBase(object):
 
     # calculate the cost of a VM during its alive length
     def get_cost_of_vm(self, vm):
-        live_length = vm.end_time - vm.start_time  # in second
+        live_length = (vm.end_time - vm.start_time) * ni.global_TS  # in second
         price = self.network.get_price_of_node(vm.location)
         return live_length * price * vm.cpu_cores / 3600  # the price is for per hour
 
     # Store the latency information for a request
     def store_latency(self, req, latency):
-        latency = int(latency)
+        # latency = int(latency)
+        print("XXX",latency)
         if latency <= req.deadline:
             self.latency[req] = (1, latency)
         else:
@@ -217,13 +217,15 @@ class DataBase(object):
 
     # Average latency
     def average_latency(self):
-        print("Traffic average DDL:", self.average_deadline)
+        print("Traffic average DDL:", self.average_deadline * ni.global_TS)
         total = 0
         counter = 0
         for (flag, latency) in self.latency.values():
             if flag != -1:
                 total += latency
                 counter += 1
+        if counter == 0:
+            return float('inf')
         return total * ni.global_TS / counter
 
     # Blocking probability
@@ -231,15 +233,15 @@ class DataBase(object):
         counter = 0
         for req in self.latency:
             if self.latency[req][0] == -1:
-                print("Blocked req:", req, "latency:", self.latency[req][1])
+                # print("Blocked req:", req, "latency:", self.latency[req][1])
                 counter += 1
         # print("self req no", counter, len(self.tf_gen.req_set))
-        return counter / len(self.tf_gen.req_set)
+        return round(counter / len(self.tf_gen.req_set), 2)
 
     # Internet ingress/egress latency and fee
     def internet_latency_fee(self, data_size, src, dst):
         default_cap = ni.trans_cap  # Assuming the capacity is 10 Gbps
-        trans_latency = int(data_size / default_cap / ni.global_TS)
+        trans_latency = math.ceil(data_size / default_cap / ni.global_TS)
         pro_latency = self.propagation_latency(src, dst)
         fee = ni.in_e_gress_fee * data_size
         return trans_latency, pro_latency, fee
@@ -248,13 +250,16 @@ class DataBase(object):
     # Modified, the input parameters 'dst_vm' can be nodes
     def trans_latency_fee(self, data_size, src_vm, dst_vm, capacity=-1):
         if capacity == -1:
-            latency = int(data_size / (src_vm.cpu_cores * ni.basic_trans_capacity) / ni.global_TS)
+            latency = math.ceil(data_size / (src_vm.cpu_cores * ni.basic_trans_capacity) / ni.global_TS)
         else:
-            latency = int(data_size / capacity / ni.global_TS)
+            latency = math.ceil(data_size / capacity / ni.global_TS)
         # if isinstance(src_vm, virtual_layer_elements.VirtualMachine):
         #     src = src_vm.location
         dst = dst_vm
         if isinstance(dst_vm, virtual_layer_elements.VirtualMachine):
+            # if they are the same VM:
+            if src_vm.index == dst_vm.index:
+                return 0, 0
             dst = dst_vm.location
         # print("XXXXX dst", dst)
         if self.network.get_zone(src_vm.location) == self.network.get_zone(dst):
@@ -266,7 +271,7 @@ class DataBase(object):
     # Propagation latency
     def propagation_latency(self, src, dst):
         dis = self.network.get_shortest_dis(src, dst)
-        return dis / ni.light_speed
+        return dis / ni.light_speed / ni.global_TS
 
     # Total cost
     def get_cost(self):
@@ -274,9 +279,9 @@ class DataBase(object):
             # print("STILL HAVE!!")
             time.sleep(3)
             continue
-        print("CPU cost ($):" + str(self.total_cpu_cost))
+        print("CPU cost ($):" + str(round(self.total_cpu_cost, 3)))
         trans_data_cost = sum(self.req_trans_fee.values())
-        print("Data transmission cost ($):" + str(trans_data_cost))
+        print("Data transmission cost ($):" + str(round(trans_data_cost, 3)))
 
     # All vm used
     def get_used_vm_no(self):
@@ -286,13 +291,16 @@ class DataBase(object):
     # Print all VM and VNF information of each req.
     def print_req_provisioning(self):
         with open('result.txt', 'w') as f:
+            f.write("#### SIMULATION PARAMETERS: ####\n")
+            f.write("Req. Number: " + str(len(self.tf_gen.req_set)) + " DDL Scale: " + str(self.tf_gen.ddl_scale)
+                    + " " + str(self.network.get_pars()) + "\n")
             f.write("~~~~~~~~~~~~~NOW PRINT REQUEST PROVISIONING INFORMATION~~~~~~~~~~~~~\n")
             for req in self.req_vm_info:
                 f.write("---------------------------\n")
                 f.write(str(req) + "\n")
                 if self.req_vm_info[req]:
                     for vnf_type in self.req_vm_info[req]:
-                        f.write("VNF: " + str(vnf_type.value[0]) + " in VM: ")
+                        f.write("VNF: " + str(vnf_type.value[0]) + " in ")
                         f.write(self.req_vm_info[req][vnf_type].basic_info() + "\n")
                         f.write("Latency:" + str(self.latency[req][1]) + "\n")
                 else:

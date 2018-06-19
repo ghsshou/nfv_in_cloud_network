@@ -15,14 +15,14 @@ class TrafficGenerator(object):
         self._max_req_num = max_req_num
         self.optional_data_size = optional_data_size
         self.time_slot_length = ni.global_TS  # Length of a time slot in ms
-        self.control_factor = 0.1  # To control the arriving time
+        self.control_factor = 0.01  # To control the arriving time
         # The deadline for a request is basic_deadline + deadline_length * random()
         self.basic_deadline = 40
         self.deadline_length = 40
-        self.ddl_scale = 1.2  # The scale factor for deadline according to the processing time
+        self.ddl_scale = 0.88  # The scale factor for deadline according to the processing time
         # The optional data size of a request
-        self.basic_size = 10
-        self.size_length = 9.5
+        self.basic_size = 1
+        self.size_length = 4
         # Sleep time
         self.sleep_time =[]
         self.req_set = []
@@ -59,7 +59,8 @@ class TrafficGenerator(object):
             req_vnfs = list(data_base.scs.get_sc(req.sc))  # Get the name of vnfs
             est_time = 0
             for vnf_type in req_vnfs:
-                est_time += req.data_size / vnf_type.value[2] / ni.global_TS
+                est_time += math.ceil(req.data_size / vnf_type.value[2] / ni.global_TS)
+                est_time += 2 * math.ceil(req.data_size / ni.trans_cap / ni.global_TS)
             req.deadline = math.ceil(est_time * self.ddl_scale)  # the scale factor
             ave += est_time
         return ave / len(self.req_set)
@@ -82,7 +83,7 @@ class TrafficGenerator(object):
 
     def poisson_traffic(self, lam, max_num):
         traffic = np.random.poisson(lam, max_num)
-        traffic = [x * self.time_slot_length * self.control_factor for x in traffic]
+        traffic = [x / self.time_slot_length * self.control_factor for x in traffic]
         ave_duetime = np.mean(traffic)
         result = []
         val = 0

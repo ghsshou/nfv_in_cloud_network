@@ -2,15 +2,15 @@ import dijkstra
 from enum import Enum, unique
 
 
-global_TS = 0.1  # The length of a time slot in s
+global_TS = 0.01  # The length of a time slot in s
 trans_fee = 0.01  # Price of data transferred between VMs in different zones, in Gb
-light_speed = 2000000  # km/s
-in_e_gress_fee = 0.01  # the fee of traffic ingress and egress Internet (per GB)
-trans_cap = 100  # Ingress and egress transmission capacity
-basic_trans_capacity = 2  # Transmission capacity between VMs per CPU core in Gbps
+light_speed = 200000  # km/s
+in_e_gress_fee = 0  # the fee of traffic ingress and egress Internet (per GB)
+trans_cap = 10  # Ingress and egress transmission capacity
+basic_trans_capacity = 100  # Transmission capacity between VMs per CPU core in Gbps
 
-basic_idle_length = 20  # The initial idle length for a VNF
-idle_len_inc_step = 0  # The step increased for idle length
+basic_idle_length = 800  # The initial idle length for a VNF
+idle_len_inc_step = 800  # The step increased for idle length
 
 
 class NetworkInfo(object):
@@ -26,6 +26,11 @@ class NetworkInfo(object):
         self._data_centers.update(data_center)
         self._user_nodes = self._user_nodes - self._data_centers
 
+    def get_pars(self):
+        return "global_TS: " + str(global_TS) + " Trans. fee: " + str(trans_fee) + " Ingress/Egress fee: $" \
+               + str(in_e_gress_fee) + " Ingress/Egress fee: $" + str(trans_cap) + " Basic trans. cap: " + \
+               str(basic_trans_capacity) + "Gbps" + " IDLE len: " + str(basic_idle_length) + "\\" + \
+               str(idle_len_inc_step)
     def get_data_centers(self):
         return self._data_centers
 
