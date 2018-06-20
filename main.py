@@ -42,7 +42,7 @@ if __name__ == "__main__":
     # Traffic generator initialize
     # Para: lambda, mu, request number, optional data size
     traffic_num = 1000
-    data_base.set_traffic_generator(5, 0.001, traffic_num, [4, 6, 8, 10])
+    data_base.set_traffic_generator(5, 0.001, traffic_num, [1, 2.5, 5, 7.5, 10])
     # data_base.tf_gen.print_all_requests()
     # l = data_base.tf_gen.print_sleep_time()
     # x = list(range(1000))

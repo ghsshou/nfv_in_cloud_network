@@ -19,7 +19,7 @@ class TrafficGenerator(object):
         # The deadline for a request is basic_deadline + deadline_length * random()
         self.basic_deadline = 40
         self.deadline_length = 40
-        self.ddl_scale = 0.89  # The scale factor for deadline according to the processing time
+        self.ddl_scale = 0.85  # The scale factor for deadline according to the processing time
         # The optional data size of a request
         self.basic_size = 1
         self.size_length = 4
