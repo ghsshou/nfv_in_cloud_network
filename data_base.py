@@ -6,6 +6,9 @@ import network_info as ni
 import threading, time
 from collections import defaultdict
 import math
+from request_type import Request
+from virtual_layer_elements import VirtualMachine
+from service_chain import NetworkFunction
 
 
 class DataBase(object):
@@ -26,6 +29,8 @@ class DataBase(object):
         self.req_vm_info = {}  # the VM used for each req
         self.latency = {}  # the latency of each req
         self.average_deadline = 0  # The average deadline of all request, can be thought as parameter mu
+        self.used_FS = 0  # how many FSs are used in total
+        self.max_vms_online = 400  # The maximum VMs that can be used at the same time
 
         for vnf in service_chain.NetworkFunctionName:
             # print(vnf)
@@ -58,15 +63,17 @@ class DataBase(object):
     def add_datacenter(self, data_centers):
         self.network.add_data_center(data_centers)
 
-    def set_traffic_generator(self, input_lambda, input_mu, max_req_num, optional_data_size=[]):
-        self.tf_gen = traffic_generator.TrafficGenerator(input_lambda, input_mu, max_req_num, optional_data_size)
+    def set_traffic_generator(self, input_lambda, ddl_scale, max_req_num, optional_data_size=[]):
+        self.tf_gen = traffic_generator.TrafficGenerator(input_lambda, ddl_scale, max_req_num, optional_data_size)
         # Para: service chain size, user node set, whether use optional data_size
         use_optional_size = 'continuous'
         if optional_data_size:
             use_optional_size = 'not_continuous'
         # print(use_optional_size)
-        self.tf_gen.generate_traffic(self.scs.get_size(), self.network.get_user_nodes(), use_optional_size)
-        self.average_deadline = self.tf_gen.deadline_revise(self)
+        avg_arr = self.tf_gen.generate_traffic(self.scs.get_size(), self.network.get_user_nodes(), use_optional_size)
+        self.average_deadline = self.tf_gen.deadline_revise(self) * ni.global_TS
+        # avg_due_time = self.average_deadline * ni.global_TS
+        return avg_arr, self.average_deadline
 
     # Get estimated start processing time of each vnf (according to basic processing capacity):
     @staticmethod
@@ -217,7 +224,7 @@ class DataBase(object):
 
     # Average latency
     def average_latency(self):
-        print("Traffic average DDL:", self.average_deadline * ni.global_TS)
+        # print("Traffic average DDL:", self.average_deadline * ni.global_TS)
         total = 0
         counter = 0
         for (flag, latency) in self.latency.values():
@@ -233,10 +240,10 @@ class DataBase(object):
         counter = 0
         for req in self.latency:
             if self.latency[req][0] == -1:
-                print("Blocked req:", req, "latency:", self.latency[req][1])
+                # print("Blocked req:", req, "latency:", self.latency[req][1])
                 counter += 1
         # print("self req no", counter, len(self.tf_gen.req_set))
-        return round(counter / len(self.tf_gen.req_set), 2)
+        return round(counter / len(self.tf_gen.req_set), 4)
 
     # Internet ingress/egress latency and fee
     def internet_latency_fee(self, data_size, src, dst):
@@ -273,6 +280,9 @@ class DataBase(object):
         dis = self.network.get_shortest_dis(src, dst)
         return dis / ni.light_speed / ni.global_TS
 
+    def get_hop(self, src, dst):
+        return self.network.get_shortest_hop(src, dst)
+
     # Total cost
     def get_cost(self):
         while self.vms:
@@ -282,6 +292,7 @@ class DataBase(object):
         print("CPU cost ($):" + str(round(self.total_cpu_cost, 3)))
         trans_data_cost = sum(self.req_trans_fee.values())
         print("Data transmission cost ($):" + str(round(trans_data_cost, 3)))
+        return self.total_cpu_cost, trans_data_cost
 
     # All vm used
     def get_used_vm_no(self):
@@ -290,7 +301,7 @@ class DataBase(object):
 
     # Print all VM and VNF information of each req.
     def print_req_provisioning(self):
-        with open('result.txt', 'w') as f:
+        with open('Details.txt', 'w') as f:
             f.write("#### SIMULATION PARAMETERS: ####\n")
             f.write("Req. Number: " + str(len(self.tf_gen.req_set)) + " DDL Scale: " + str(self.tf_gen.ddl_scale)
                     + " " + str(self.network.get_pars()) + "\n")
@@ -309,6 +320,14 @@ class DataBase(object):
     def print_all_vms(self):
         for vm in self.all_used_vm:
             print(vm)
+
+    # Reset counter
+    @staticmethod
+    def reset_counters():
+        Request.counter = 0
+        NetworkFunction.counter = 0
+        VirtualMachine.counter = 0
+
 
 
 

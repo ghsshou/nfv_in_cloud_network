@@ -37,12 +37,12 @@ if __name__ == "__main__":
     data_base.scs.add_sc(new_sc)
     # data_base.scs.print_all_scs()
     # Network initialize
-    data_center = ["0", "10", "4"]
+    data_center = ["6", "17", "22"]
     data_base.add_datacenter(data_center)
     # Traffic generator initialize
     # Para: lambda, mu, request number, optional data size
     traffic_num = 1000
-    data_base.set_traffic_generator(5, 0.001, traffic_num, [1, 2.5, 5, 7.5, 10])
+    avg_arr = data_base.set_traffic_generator(0.04, 0.001, traffic_num, [1, 2.5, 5, 7.5, 10])
     # data_base.tf_gen.print_all_requests()
     # l = data_base.tf_gen.print_sleep_time()
     # x = list(range(1000))
@@ -70,7 +70,10 @@ if __name__ == "__main__":
     data_base.get_used_vm_no()
     data_base.print_req_provisioning()
     print("Average Latency: " + str(round(data_base.average_latency(), 3)) + "s")
+    print("Average Arrival Interval: " + str(round(avg_arr, 3)))
+    print("Traffic Load:" + str(round(data_base.average_latency() / avg_arr, 3)))
     print("BP: " + str(data_base.blocking_probability() * 100) + "%")
+    print("Used FS:" + str(data_base.used_FS))
     # data_base.print_all_vms()
 
 

@@ -1,13 +1,14 @@
 class Request(object):
     counter = 0
 
-    def __init__(self, src, dst, sc, data_size, deadline, arr_time=0):
+    def __init__(self, src, dst, sc, data_size, deadline, ddl_type, arr_time=0):
         self.src = src
         self.dst = dst
         self.sc = sc
         self.data_size = data_size
         self.arr_time = arr_time
         self.deadline = deadline
+        self.ddl_type = ddl_type  # 'fixed', 'variable', and 'unlimited'
         self.counter = Request.counter
         Request.counter = Request.counter + 1
 

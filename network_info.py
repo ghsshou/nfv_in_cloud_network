@@ -6,15 +6,19 @@ global_TS = 0.01  # The length of a time slot in s
 trans_fee = 0.01  # Price of data transferred between VMs in different zones, in Gb
 light_speed = 200000  # km/s
 in_e_gress_fee = 0  # the fee of traffic ingress and egress Internet (per GB)
-trans_cap = 10  # Ingress and egress transmission capacity
-basic_trans_capacity = 30  # Transmission capacity between VMs per CPU core in Gbps
+trans_cap = 100  # Ingress and egress transmission capacity
+basic_trans_capacity = 10  # Transmission capacity between VMs per CPU core in Gbps
 
-basic_idle_length = 800  # The initial idle length for a VNF
-idle_len_inc_step = 800  # The step increased for idle length
+max_cpu_cores = 20  # Maximum CPU cores that can be used in a VM
+
+cap_one_FS = 12.5  # The capacity for one FS with BPSK
+
+basic_idle_length = 200  # The initial idle length for a VNF
+idle_len_inc_step = 200  # The step increased for idle length
 
 
 class NetworkInfo(object):
-    _path = "COST239"
+    _path = "US_BACKBONE_28"
 
     def __init__(self, *data_centers):
         self._graph = dijkstra.Graph()
@@ -31,6 +35,7 @@ class NetworkInfo(object):
                + str(in_e_gress_fee) + " Ingress/Egress fee: $" + str(trans_cap) + " Basic trans. cap: " + \
                str(basic_trans_capacity) + "Gbps" + " IDLE len: " + str(basic_idle_length) + "\\" + \
                str(idle_len_inc_step)
+
     def get_data_centers(self):
         return self._data_centers
 
@@ -50,6 +55,9 @@ class NetworkInfo(object):
         result = self._graph.shortest_path(src, dst)
         return result[1]
 
+    def get_shortest_hop(self, src, dst):
+        return self._graph.shortest_path(src, dst)[2]
+
     def find_nearest_zone(self, node):
         shorest_dis = float('inf')
         nearest_dc = None
@@ -65,9 +73,12 @@ class NetworkInfo(object):
 
 @unique
 class CPUPrice(Enum):
-    z1 = ['0', 0.033174]  # name, price (per CPU per hour)
-    z2 = ['1', 0.043174]
-    z3 = ['2', 0.023174]
+    # z1 = ['0', 0.033174]  # name, price (per CPU per hour)
+    # z2 = ['1', 0.043174]
+    # z3 = ['2', 0.023174]
+    z1 = ['0', 3600]  # name, price (per CPU per hour)
+    z2 = ['1', 3600]
+    z3 = ['2', 3600]
 
 
 if __name__ == "__main__":

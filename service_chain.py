@@ -14,7 +14,7 @@ class NetworkFunction(object):
     counter = 0
 
     def __init__(self, name, idle_length):
-        self.install_time = 1  # default installation time of a VNF is one TS
+        self.install_time = 50  # default installation time of a VNF is one TS
         self.name = name.value[0]
         # 0: single thread, 1: multi-thread
         self.thread_attr = name.value[1]

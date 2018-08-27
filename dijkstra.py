@@ -80,7 +80,8 @@ class Graph(object):
         else:
             path = paths[0][dst]
             dis = paths[1][dst]
-        return path, dis
+        hop = len(path) - 1
+        return path, dis, hop
 
     def print_topology(self):
         print("Node Number: %d" % len(self.nodes))
