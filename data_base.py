@@ -9,6 +9,7 @@ import math
 from request_type import Request
 from virtual_layer_elements import VirtualMachine
 from service_chain import NetworkFunction
+import logging
 
 
 class DataBase(object):
@@ -30,7 +31,7 @@ class DataBase(object):
         self.latency = {}  # the latency of each req
         self.average_deadline = 0  # The average deadline of all request, can be thought as parameter mu
         self.used_FS = 0  # how many FSs are used in total
-        self.max_vms_online = 400  # The maximum VMs that can be used at the same time
+        self.max_vms_online = 99999  # The maximum VMs that can be used at the same time
 
         for vnf in service_chain.NetworkFunctionName:
             # print(vnf)
@@ -49,13 +50,13 @@ class DataBase(object):
 
     def add_vnf(self, vnf):
         if not isinstance(vnf, service_chain.NetworkFunction):
-            print("Error: Input is not a VNF")
+            logging.info("Error: Input is not a VNF")
             return None
         self.vnfs.append(vnf)
 
     def rem_vnf(self, vnf):
         if not isinstance(vnf, service_chain.NetworkFunction):
-            print("Error: Input is not a VNF")
+            logging.info("Error: Input is not a VNF")
             return None
         if vnf in self.vnfs:
             self.vnfs.remove(vnf)
@@ -87,7 +88,7 @@ class DataBase(object):
 
     # Start a VM with start time, and finish time, using a thread
     def start_new_vm(self, start_time, cpu, location, vnf_type, data_size):
-        print("SS", vnf_type, "IDLE LENGTH:", self.vnf_idle_length[vnf_type])
+        logging.debug("SS" + str(vnf_type) + "IDLE LENGTH:" + str(self.vnf_idle_length[vnf_type]))
         vnf = service_chain.NetworkFunction(vnf_type, self.vnf_idle_length[vnf_type])
         use_time = self.estimate_vm_alive_length(vnf, data_size, cpu)
         processing_time = use_time - vnf.idle_length - vnf.install_time
@@ -98,7 +99,7 @@ class DataBase(object):
         # print(vm)
         # print("[VNF: " + str(vnf_type.value[0]) + ", VM: " + str(vm.index) + ", VNF processing time: " +
         #       str(processing_time) + ", Actually total use time:" + str(use_time) + "]")
-        timer = threading.Timer((vm.end_time - start_time) * ni.global_TS, self._end_vm, args=(vm,))
+        timer = threading.Timer((vm.end_time - start_time) * ni.global_TS * self.tf_gen.control_factor, self._end_vm, args=(vm,))
         # timer = threading.Thread(target=self._end_vm, args=(vm,))
         # time.sleep((end_time - start_time) * ni.global_TS)
         timer.start()
@@ -136,7 +137,7 @@ class DataBase(object):
     def _end_vm(self, vm):
         # self.rLock.acquire()
         if vm not in self.vms or vm.state == 'Closed':
-            print("Remove Error: No such VM or VM is closed")
+            logging.info("Remove Error: No such VM or VM is closed")
             return -1
         if len(vm.vnfs) == 1:
             vm.close_vm()
@@ -169,7 +170,7 @@ class DataBase(object):
     # Install a VNF to a VM
     def install_vnf_to_vm(self, vnf, processing_time, vm, start_time):
         if vm not in self.vms:
-            print("**Error in fun. install_vnf_to_vm: no such VM")
+            logging.info("**Error in fun. install_vnf_to_vm: no such VM")
             return -1
         vnf.set_processing_time(processing_time)  # Update the processing time of the instance
         vnf.set_start_time(start_time)  # Update the start processing time
@@ -198,7 +199,7 @@ class DataBase(object):
             if not vm.host_vnf(vnf_type):
                 to_remove.append(vm)
             else:
-                if vm.get_next_ava_time() <= time_slot <= vm.end_time:
+                if vm.get_next_ava_time() <= time_slot:
                     continue
                 else:
                     # print("XXXXX remove")
@@ -216,8 +217,11 @@ class DataBase(object):
     # Store the latency information for a request
     def store_latency(self, req, latency):
         # latency = int(latency)
-        print("XXX",latency)
-        if latency <= req.deadline:
+        logging.debug("XXX" + str(latency))
+        temp_ddl = req.deadline
+        if req.ddl_type == self.tf_gen.ddl_type_list[1]:
+            temp_ddl = req.deadline[1]
+        if latency <= temp_ddl:
             self.latency[req] = (1, latency)
         else:
             self.latency[req] = (-1, latency)
@@ -289,14 +293,14 @@ class DataBase(object):
             # print("STILL HAVE!!")
             time.sleep(3)
             continue
-        print("CPU cost ($):" + str(round(self.total_cpu_cost, 3)))
+            logging.info("CPU cost ($):" + str(round(self.total_cpu_cost, 3)))
         trans_data_cost = sum(self.req_trans_fee.values())
-        print("Data transmission cost ($):" + str(round(trans_data_cost, 3)))
+        logging.info("Data transmission cost ($):" + str(round(trans_data_cost, 3)))
         return self.total_cpu_cost, trans_data_cost
 
     # All vm used
     def get_used_vm_no(self):
-        print("Have used " + str(len(self.all_used_vm)) + " VMs in total")
+        logging.info("Have used " + str(len(self.all_used_vm)) + " VMs in total")
         return len(self.all_used_vm)
 
     # Print all VM and VNF information of each req.
@@ -316,6 +320,7 @@ class DataBase(object):
                         f.write("Latency:" + str(self.latency[req][1]) + "\n")
                 else:
                     f.write("Blocked" + "\n")
+                    f.write("Latency:" + str(self.latency[req][1]) + "\n")
 
     def print_all_vms(self):
         for vm in self.all_used_vm:

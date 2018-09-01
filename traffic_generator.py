@@ -4,6 +4,7 @@ import request_type
 import numpy as np
 import network_info as ni
 import math
+import logging
 
 
 class TrafficGenerator(object):
@@ -15,8 +16,8 @@ class TrafficGenerator(object):
         # self._mu = input_mu
         self._max_req_num = max_req_num
         self.optional_data_size = optional_data_size
-        self.time_slot_length = ni.global_TS  # Length of a time slot in ms
-        self.control_factor = 0.5  # To control the arriving time
+        self.time_slot_length = ni.global_TS  # Length of a time slot in s
+        self.control_factor = 0.05  # To control the arriving time
         # The deadline for a request is basic_deadline + deadline_length * random()
         self.basic_deadline = 40
         self.deadline_length = 40
@@ -41,15 +42,16 @@ class TrafficGenerator(object):
             req_data_size = self.optional_data_size[data_size_index]
         else:
             req_data_size = self.basic_size + self.size_length * random.random()
-        req_ddl_type = ddl_type_list[int(len(self.ddl_type_list) * random.random())]
+        req_ddl_type = self.ddl_type_list[int(len(self.ddl_type_list) * random.random())]
         req_deadline = self.basic_deadline + int(self.deadline_length * random.random())
         new_request = request_type.Request(user_list[src_index], user_list[dst_index], req_sc, req_data_size,
                                            req_deadline, req_ddl_type)
+        # print("REQ: ", new_request.counter, " ddl_type:", new_request.ddl_type)
         return new_request
 
     def generate_traffic(self, sc_size, user_node, data_size_flag="continuous"):
         (self.sleep_time, arr_time, average_interval_time) = self.poisson_traffic(self._lambda, self._max_req_num)
-        print("Average Arrive Interval:", average_interval_time * ni.global_TS)
+        logging.info("Average Arrive Interval:" + str(average_interval_time * ni.global_TS))
         for i in range(self._max_req_num):
             self.req_set.append(self.generate_one_req(sc_size, user_node, data_size_flag))
             self.req_set[i].arr_time = arr_time[i]
@@ -66,10 +68,12 @@ class TrafficGenerator(object):
                 est_time += 2 * math.ceil(req.data_size / ni.trans_cap / ni.global_TS)
             if req.ddl_type == self.ddl_type_list[0]:  # fixed ddl
                 req.deadline = math.ceil(est_time * self.ddl_scale)  # the scale factor
-            if req.ddl_type == self.ddl_type_list[1]: # variable ddl
+                # if req.deadline < 100:
+                #     req.deadline = req.deadline * 1.7
+            if req.ddl_type == self.ddl_type_list[1]:  # variable ddl
                 req.deadline = (math.ceil(est_time * self.ddl_scale), math.ceil(est_time * self.ddl_scale * 4))
                 ave += req.deadline[0]
-            if req.deadline == self.ddl_type_list[2]:  # unlimited
+            if req.ddl_type == self.ddl_type_list[2]:  # unlimited
                 req.deadline = math.inf
         return ave / len(self.req_set)
 
@@ -91,8 +95,9 @@ class TrafficGenerator(object):
         return result
 
     def poisson_traffic(self, lam, max_num):
-        traffic = np.random.poisson(lam, max_num)
-        traffic = [x / self.time_slot_length for x in traffic]
+        lam_in_TS = lam / self.time_slot_length
+        traffic = np.random.poisson(lam_in_TS, max_num)
+        # traffic = [x / self.time_slot_length for x in traffic]
         ave_duetime = np.mean(traffic)
         result = []
         val = 0

@@ -15,7 +15,7 @@ class Request(object):
     def __str__(self):
         return "[REQ " + str(self.counter) + ":" + self.src + "->" + self.dst + ", SC type: " + str(self.sc) + \
             ", Data size: " + str(self.data_size) + ", Arrives at: " + str(self.arr_time)\
-               + ", Deadline: " + str(self.deadline) +"]"
+               + ", DDL type:" + self.ddl_type + ", Deadline: " + str(self.deadline) +"]"
 
 
 if __name__ == "__main__":

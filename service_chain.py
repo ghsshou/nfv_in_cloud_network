@@ -3,10 +3,11 @@ from enum import Enum, unique
 
 @unique
 class NetworkFunctionName(Enum):
-    fun_1 = ['0', 0, 2]  # name, thread, throughput
-    fun_2 = ['1', 1, 1]
-    fun_3 = ['2', 0, 3]
-    fun_4 = ['3', 1, 5]
+    fun_1 = ['0', 0, 1]  # name, thread, throughput
+    fun_2 = ['1', 1, 0.5]
+    fun_3 = ['2', 0, 0.5]
+    fun_4 = ['3', 1, 1]
+    fun_5 = ['4', 1, 2]
 
 
 # This is an instance of a VNF
@@ -14,7 +15,7 @@ class NetworkFunction(object):
     counter = 0
 
     def __init__(self, name, idle_length):
-        self.install_time = 50  # default installation time of a VNF is one TS
+        self.install_time = 10  # default installation time of a VNF is one TS
         self.name = name.value[0]
         # 0: single thread, 1: multi-thread
         self.thread_attr = name.value[1]

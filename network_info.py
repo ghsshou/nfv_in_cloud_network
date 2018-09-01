@@ -6,15 +6,15 @@ global_TS = 0.01  # The length of a time slot in s
 trans_fee = 0.01  # Price of data transferred between VMs in different zones, in Gb
 light_speed = 200000  # km/s
 in_e_gress_fee = 0  # the fee of traffic ingress and egress Internet (per GB)
-trans_cap = 100  # Ingress and egress transmission capacity
-basic_trans_capacity = 10  # Transmission capacity between VMs per CPU core in Gbps
+trans_cap = 10  # Ingress and egress transmission capacity
+basic_trans_capacity = 5  # Transmission capacity between VMs per CPU core in Gbps
 
-max_cpu_cores = 20  # Maximum CPU cores that can be used in a VM
+max_cpu_cores = 50  # Maximum CPU cores that can be used in a VM
 
 cap_one_FS = 12.5  # The capacity for one FS with BPSK
 
-basic_idle_length = 200  # The initial idle length for a VNF
-idle_len_inc_step = 200  # The step increased for idle length
+basic_idle_length = 0  # The initial idle length for a VNF
+idle_len_inc_step = 0  # The step increased for idle length
 
 
 class NetworkInfo(object):
@@ -32,7 +32,7 @@ class NetworkInfo(object):
 
     def get_pars(self):
         return "global_TS: " + str(global_TS) + " Trans. fee: " + str(trans_fee) + " Ingress/Egress fee: $" \
-               + str(in_e_gress_fee) + " Ingress/Egress fee: $" + str(trans_cap) + " Basic trans. cap: " + \
+               + str(in_e_gress_fee) + " Ingress/Egress trans. cap: " + str(trans_cap) + "Gbps Basic trans. cap: " + \
                str(basic_trans_capacity) + "Gbps" + " IDLE len: " + str(basic_idle_length) + "\\" + \
                str(idle_len_inc_step)
 
@@ -73,12 +73,14 @@ class NetworkInfo(object):
 
 @unique
 class CPUPrice(Enum):
-    # z1 = ['0', 0.033174]  # name, price (per CPU per hour)
-    # z2 = ['1', 0.043174]
-    # z3 = ['2', 0.023174]
-    z1 = ['0', 3600]  # name, price (per CPU per hour)
-    z2 = ['1', 3600]
-    z3 = ['2', 3600]
+    z0 = ['0', 0.034]  # name, price (per CPU per hour)
+    z1 = ['1', 0.038]
+    z2 = ['2', 0.04]
+    z3 = ['3', 0.05]
+    z4 = ['4', 0.035]
+    # z1 = ['0', 3600]  # name, price (per CPU per hour)
+    # z2 = ['1', 3600]
+    # z3 = ['2', 3600]
 
 
 if __name__ == "__main__":
