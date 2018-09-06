@@ -1,0 +1,24 @@
+@ Simulation Parameters: traffic size: 0.15
+                   Mean      STD
+[0] Traffic_Load    95.7      1.58
+[1] CPU_Cost        0.61      0.0
+[2] BP              0.0558    0.003
+[3] Latency         4.79      0.07
+[4] Used_VM         11160.0   89.35
+[5] Used_FSs        0.0       0.0
+[6] Arr._Int        0.05      0.0
+[7] Theory_Traffic_Load 33.3      0.39
+[8] Trans_Cost      8.0       0.53
+[9] Total_Cost      8.61      0.53
+@ Simulation Parameters: traffic size: 0.225
+                   Mean      STD
+[0] Traffic_Load    135.41    3.62
+[1] CPU_Cost        0.85      0.01
+[2] BP              0.0455    0.0055
+[3] Latency         6.76      0.18
+[4] Used_VM         11039.0   172.26
+[5] Used_FSs        0.0       0.0
+[6] Arr._Int        0.05      0.0
+[7] Theory_Traffic_Load 49.9      1.0
+[8] Trans_Cost      13.72     1.1
+[9] Total_Cost      14.57     1.12
