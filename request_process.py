@@ -314,12 +314,12 @@ def conventional_place_vnfs(data_base, req_vnfs, req, est_time):
             if index == 0:
                 # find the zone nearest to the last one
                 vm = vm_w_vnf[vnf_type][0]
-                if len(vm_w_vnf[vnf_type]) > 0:
-                    for var_vm in vm_w_vnf[vnf_type]:
-                        if data_base.network.get_zone(var_vm.location) == data_base.network.get_zone(
-                                cand_dc):
-                            vm = var_vm
-                            break
+                # if len(vm_w_vnf[vnf_type]) > 0:
+                #     for var_vm in vm_w_vnf[vnf_type]:
+                #         if data_base.network.get_zone(var_vm.location) == data_base.network.get_zone(
+                #                 cand_dc):
+                #             vm = var_vm
+                #             break
 
                 (tran_latency, pro_latency, trans_fee) = data_base.internet_latency_fee(req.data_size,
                                                                                         req.src, vm.location)
@@ -329,12 +329,12 @@ def conventional_place_vnfs(data_base, req_vnfs, req, est_time):
             else:
                 # find the zone nearest to the last one
                 vm = vm_w_vnf[vnf_type][0]
-                if len(vm_w_vnf[vnf_type]) > 0:
-                    for var_vm in vm_w_vnf[vnf_type]:
-                        if data_base.network.get_zone(var_vm.location) == data_base.network.get_zone(
-                                placed_vms[req_vnfs[index - 1]].location):
-                            vm = var_vm
-                            break
+                # if len(vm_w_vnf[vnf_type]) > 0:
+                #     for var_vm in vm_w_vnf[vnf_type]:
+                #         if data_base.network.get_zone(var_vm.location) == data_base.network.get_zone(
+                #                 placed_vms[req_vnfs[index - 1]].location):
+                #             vm = var_vm
+                #             break
                 pro_latency = data_base.propagation_latency(placed_vms[req_vnfs[index - 1]].location, vm.location)
                 (tran_latency, trans_fee) = data_base.trans_latency_fee(req.data_size,
                                                                         placed_vms[req_vnfs[index - 1]], vm)

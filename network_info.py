@@ -7,7 +7,7 @@ trans_fee = 0.01  # Price of data transferred between VMs in different zones, in
 light_speed = 200000  # km/s
 in_e_gress_fee = 0  # the fee of traffic ingress and egress Internet (per GB)
 trans_cap = 10  # Ingress and egress transmission capacity
-basic_trans_capacity = 5  # Transmission capacity between VMs per CPU core in Gbps
+basic_trans_capacity = 0  # Transmission capacity between VMs per CPU core in Gbps
 
 max_cpu_cores = 50  # Maximum CPU cores that can be used in a VM
 
