@@ -43,7 +43,7 @@ def run_simulation_once(lmd, ddl_scale, traffic_num, traffic_size_scale):
     data_base.add_datacenter(data_center)
     # Traffic generator initialize
     # Para: lambda, mu, request number, optional data size
-    traffic_size = np.array([6, 7, 8, 9, 10])
+    traffic_size = np.array([7, 8, 9, 10])
     traffic_size = traffic_size * traffic_size_scale
     traffic_size = list(traffic_size)
     (avg_arr, due_time) = data_base.set_traffic_generator(lmd, ddl_scale, traffic_num, traffic_size)
@@ -51,7 +51,7 @@ def run_simulation_once(lmd, ddl_scale, traffic_num, traffic_size_scale):
     for i in range(traffic_num):
         sys.stdout.write("\r" + str(round((i + 1) / traffic_num * 100, 4)) + "%")
         # request_process.process_one_req(data_base, data_base.tf_gen.req_set[i])
-        request_process.algorithm_x(data_base, data_base.tf_gen.req_set[i], 'proposed')
+        request_process.algorithm_x(data_base, data_base.tf_gen.req_set[i], 'conventional')
         # time.sleep(data_base.tf_gen.sleep_time[i] * network_info.global_TS * data_base.tf_gen.control_factor)
     # time.sleep(3)
     print()
@@ -177,6 +177,7 @@ if __name__ == "__main__":
     # lmd_set = [0.01, 0.011, 0.0125, 0.015, 0.0167, 0.02, 0.025, 0.033, 0.05, 0.1]  # for different lambda
     # ddl_scale_set = [1, 1.5, 2]  # for different ddl
     traffic_size_scale = [0.15, 0.225, 0.3, 0.375, 0.45, 0.525, 0.6, 0.675, 0.75]
+    traffic_size_scale = [0.75]
     simulation_time = 10
     traffic_num = 10000
     file_name = 'results.txt'
@@ -191,7 +192,7 @@ if __name__ == "__main__":
     start_time = time.time()
     for tf in traffic_size_scale:
         print("data size:", tf)
-        results = run_simulation_w_lambda(0.05, 0.91, simulation_time, traffic_num, tf)
+        results = run_simulation_w_lambda(0.05, 0.93, simulation_time, traffic_num, tf)
         parameters['traffic size'] = tf
         output_to_file(parameters, results, file_name)
         print("elapsed time: " + str(time.time() - start_time))

@@ -259,7 +259,7 @@ class DataBase(object):
 
     # Transmission fee and latency
     # Modified, the input parameters 'dst_vm' can be nodes
-    def trans_latency_fee(self, data_size, src_vm, dst_vm, capacity=7.5):
+    def trans_latency_fee(self, data_size, src_vm, dst_vm, capacity=2.5):
         if capacity == -1:
             latency = math.ceil(data_size / (src_vm.cpu_cores * ni.basic_trans_capacity) / ni.global_TS)
         else:
